@@ -11,8 +11,9 @@ class ImageBrowser(QWidget):
 ### CONSTRUCTOR ###
 
 	def __init__(self, width=800, height=600, border=5):
-		super().__init__()
 
+		# TODO: Add QStyle for each operating system
+		super().__init__()
 		self.width = width
 		self.height = height
 		self.border = border
@@ -46,12 +47,7 @@ class ImageBrowser(QWidget):
 		self.zoomed = False
 		self.selected_image = 0
 
-		# We will reuse these image slots for all images
-
 		self.zoomed_image = self.images[self.selected_image]
-		self.zoomed_image.resize(self.width, self.height)
-		self.zoomed_image.setStyle("Zoomed")
-		self.zoomed_image.label.setAlignment(Qt.AlignCenter)
 
 		# As will the image thumbnails
 
@@ -60,11 +56,11 @@ class ImageBrowser(QWidget):
 			thumbnail = self.images[i]
 			thumbnail.move(i * self.width / 5, self.height / 2)
 			thumbnail.resize(self.width / 5, self.height / 4)
-			thumbnail.setStyle("Inactive")
-			thumbnail.label.setAlignment(Qt.AlignCenter)
+			thumbnail.deactivate()
+			thumbnail.setAlignment(Qt.AlignCenter)
 			self.thumbnails.append(thumbnail)
 			thumbnail.show()
-		self.thumbnails[self.selected_image].setStyle("Active")
+		self.thumbnails[self.selected_image].activate()
 
 	def display(self):
 		if self.zoomed:
