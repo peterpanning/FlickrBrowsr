@@ -11,8 +11,6 @@ class ImageBrowser(QWidget):
 ### CONSTRUCTOR ###
 
 	def __init__(self, width=800, height=600, border=5):
-
-		# TODO: Add QStyle for each operating system
 		super().__init__()
 		self.width = width
 		self.height = height
@@ -33,7 +31,6 @@ class ImageBrowser(QWidget):
 
 		self.initUI(width, height)  
 		self.show()
-		self.display()
 
 	def initUI(self, width, height):
 		self.setWindowTitle('Image Browser')
@@ -43,70 +40,61 @@ class ImageBrowser(QWidget):
 		p = self.palette()
 		p.setColor(self.backgroundRole(), Qt.blue)
 		self.setPalette(p)
-
-		self.zoomed = False
-		self.selected_image = 0
-
-		self.zoomed_image = self.images[self.selected_image]
-
-		# As will the image thumbnails
-
+		self.image_num = 0
 		self.thumbnails = []
 		for i in range(0, 5):
 			thumbnail = self.images[i]
-			thumbnail.move(i * self.width / 5, self.height / 2)
-			thumbnail.resize(self.width / 5, self.height / 4)
-			thumbnail.deactivate()
-			thumbnail.setAlignment(Qt.AlignCenter)
+			thumbnail.setGeometry(i * self.width / 5, self.height / 2, self.width / 5, self.height / 4)
 			self.thumbnails.append(thumbnail)
-			thumbnail.show()
-		self.thumbnails[self.selected_image].activate()
-
-	def display(self):
-		if self.zoomed:
-			self.displayZoomed()
-		else:
-			self.displayThumbs()
-
-	def displayZoomed(self):
-		# Hide all other images
-		for i in range(len(self.thumbnails)):
-			self.thumbnails[i].hide()
-		# Scale up the selected image
-		self.thumbnails[self.selected_image].resize(self.width - self.border * 2, self.height - self.border * 2)
-		self.thumbnails[self.selected_image].show()
-
-	def displayThumbs(self):
-		# In thumbnail view, hide the zoomed image
-		self.zoomed_image.hide()
-		for i in range(0, 5):
-			self.thumbnails[i].show()
-
-	# TODO: This is effectively the controller section, and should be in either its own class or
-	# in the main function. 
+		self.selected_image().activate()
 
 	def keyPressEvent(self, event):
 		key = event.key()
-		if key == Qt.Key_Left:
-			if self.selected_image == 0:
-				self.selected_image = len(self.images) - 1
+		
+		if key == Qt.Key_Left or key == Qt.Key_Right:
+			if self.selected_image().zoomed:
+				self.zoomOut()
+				self.update_thumbnail_selection(key)
+				self.zoomIn()
 			else:
-				self.selected_image = self.selected_image - 1
+				self.update_thumbnail_selection(key)
 
-		elif key == Qt.Key_Right: 
-			self.selected_image = self.selected_image + 1
-			if self.selected_image == len(self.images):
-				self.selected_image = 0
-
-		elif key == Qt.Key_Return:
-			if self.zoomed: 
-				self.displayThumbs()
-			else: 
-				self.displayZoomed()
-			self.zoomed = not self.zoomed
+		elif key == Qt.Key_Return:   
+			if self.selected_image().zoomed:
+				self.zoomOut()
+			else:
+				self.zoomIn()
 
 		elif key == Qt.Key_Escape:
-			if self.zoomed:
-				self.displayThumbs()
-				self.zoomed = not self.zoomed
-		self.display()
+			if self.selected_image().zoomed:
+				self.zoomOut()
+
+	def selected_image(self):
+		return self.thumbnails[self.image_num]
+
+	def zoomOut(self):
+		for image in self.thumbnails:
+			if image == self.selected_image():
+				image.zoomOut()
+			else:
+				image.show()
+
+	def zoomIn(self):
+		for image in self.thumbnails:
+			if image == self.selected_image():
+				image.zoomIn()
+			else:
+				image.hide()
+
+	def update_thumbnail_selection(self, key):
+		self.selected_image().deactivate()
+		if key == Qt.Key_Left:
+			if self.image_num == 0:
+				self.image_num = len(self.images) - 1
+			else:
+				self.image_num = self.image_num - 1
+		else:
+			self.image_num = self.image_num + 1
+			if self.image_num == len(self.images):
+				self.image_num = 0
+		self.selected_image().activate()
