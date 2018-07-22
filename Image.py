@@ -1,5 +1,5 @@
 """
-An class which represents images and their associated metadata as necessary for display within a simple image browser. 
+An class which represents images and their associated metadata as necessary for display within the image browser. 
 """
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel, QWidget 
