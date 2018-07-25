@@ -1,8 +1,9 @@
 import os
 from Image import Image
+#from Layout import ThumbnailLayout, ZoomedLayout
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QWidget, QLabel
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout
 
 class ImageBrowser(QWidget):
 
@@ -26,8 +27,7 @@ class ImageBrowser(QWidget):
 		self.images = []
 		self.image_num = 0
 		self.carousel = []
-
-		# TODO: Load image tags from file
+		self.layout = ThumbnailLayout()
 
 		# TODO: Exception handling/input validation on image data
 
