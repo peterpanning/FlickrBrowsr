@@ -13,6 +13,7 @@ from PyQt5.QtCore import *
 
 class Image(QLabel):
     def __init__(self, parent, image_file = "", tags = []):
+        super().__init__(parent )
         self.setParent(parent)
         self.active = False
         self.zoomed = False

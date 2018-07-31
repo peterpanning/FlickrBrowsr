@@ -5,9 +5,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout
 
-class ImageBrowser(QWidget):
+class Image_Browser(QWidget):
 
-# An ImageBrowser object is a QWidget, and is created when the program is initialized
+# An ImageBrowser object is a QStackedWidget, and is created when the program is initialized
 
 ### CONSTRUCTOR ###
 
@@ -18,6 +18,7 @@ class ImageBrowser(QWidget):
         # It can switch between two layouts: thumbnail or zoomed. 
 
         super().__init__()
+        self.Stack = QStackedLayout(self)
         self.width = width
         self.height = height
         self.border = border
@@ -25,8 +26,11 @@ class ImageBrowser(QWidget):
         self.initYLoc = 300
         self.data_folder = './data'
         self.images = []
-        self.image_num = 0
+        self.focused_image = 0
         self.carousel = []
+
+        self.Stack.addLayout(Thumbnail_layout())
+        self.Stack.addLayout(Zoomed_layout())
 
         # TODO: Exception handling/input validation on image data
 
@@ -37,7 +41,7 @@ class ImageBrowser(QWidget):
 
         for file_name in os.listdir(self.data_folder):	
             # TODO: ensure that we only load image files  
-            print(file_name)
+            # print(file_name)
             image = Image(self, self.data_folder + "/" + file_name)
             self.images.append(image)
 
@@ -56,16 +60,17 @@ class ImageBrowser(QWidget):
         p = self.palette()
         p.setColor(self.backgroundRole(), Qt.blue)
         self.setPalette(p)
-        
-        layout = Thumbnail_layout()
-        for i in range(self.selected_image(), 5):
-            """
-            thumbnail = self.images[i]
-            thumbnail.setGeometry(i * self.width / 5, self.height / 2, self.width / 5, self.height / 4)
-            self.carousel.append(thumbnail)
-            """
-            layout.addWidget(self.images[i])
-        self.setLayout(layout)
+
+        self.setLayout(self.Stack)
+
+    def setLayout(self, layout):
+        if isinstance(layout, Thumbnail_layout):
+            for i in range(self.focused_image, self.focused_image + layout.num_images):
+                layout.addWidget(self.images[i])
+        else:
+            layout.addWidget(self.images[self.focused_image])
+        super().setLayout(layout)
+
 
     def keyPressEvent(self, event):
 
@@ -82,14 +87,16 @@ class ImageBrowser(QWidget):
                 self.update_thumbnail_selection(key)
 
         elif key == Qt.Key_Return:   
-            if self.selected_image().zoomed:
-                self.zoomOut()
+            if isinstance(self.layout(), Thumbnail_layout):
+                self.setLayout(Zoomed_layout(self))
             else:
-                self.zoomIn()
+                self.setLayout(Thumbnail_layout(self))
 
         elif key == Qt.Key_Escape:
-            if self.selected_image().zoomed:
-                self.zoomOut()
+            if isinstance(self.layout(), Zoomed_layout):
+                self.setLayout(Thumbnail_layout(self))
+        else:
+            return
 
     def zoomOut(self):
 
@@ -132,4 +139,4 @@ class ImageBrowser(QWidget):
         self.selected_image().activate()
 
     def selected_image(self):
-        return self.carousel[self.image_num]
+        return self.carousel[self.focused_image]
