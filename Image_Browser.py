@@ -3,7 +3,7 @@ from Image import Image
 from Layouts import Thumbnail_layout, Zoomed_layout
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget
 
 class Image_Browser(QWidget):
 
@@ -18,7 +18,7 @@ class Image_Browser(QWidget):
         # It can switch between two layouts: thumbnail or zoomed. 
 
         super().__init__()
-        self.Stack = QStackedLayout(self)
+        
         self.width = width
         self.height = height
         self.border = border
@@ -28,9 +28,6 @@ class Image_Browser(QWidget):
         self.images = []
         self.focused_image = 0
         self.carousel = []
-
-        self.Stack.addLayout(Thumbnail_layout())
-        self.Stack.addLayout(Zoomed_layout())
 
         # TODO: Exception handling/input validation on image data
 
@@ -61,16 +58,33 @@ class Image_Browser(QWidget):
         p.setColor(self.backgroundRole(), Qt.blue)
         self.setPalette(p)
 
-        self.setLayout(self.Stack)
+        # StackedWidgets are composed of multiple widgets, each of which can have their own layout
+        self.stack = QStackedWidget()
 
-    def setLayout(self, layout):
-        if isinstance(layout, Thumbnail_layout):
-            for i in range(self.focused_image, self.focused_image + layout.num_images):
-                layout.addWidget(self.images[i])
-        else:
-            layout.addWidget(self.images[self.focused_image])
-        super().setLayout(layout)
+        # Thumbnail widget uses a QHBoxLayout for its multi-widget carousel
+        thumbnail_widget = QWidget()
+        thumbnail_layout = QHBoxLayout()
+        for i in range(self.focused_image, self.focused_image + 5):
+            thumbnail_layout.addWidget(self.images[i])
+        thumbnail_widget.setLayout(thumbnail_layout)
+        self.stack.addWidget(thumbnail_widget)
+        
+        # Zoomed widget also uses a QHBoxLayout, but has only one widget
+        zoomed_widget = QWidget()
+        zoomed_layout = QHBoxLayout()
+        zoomed_layout.addWidget(self.images[self.focused_image])
+        zoomed_widget.setLayout(zoomed_layout)
+        self.stack.addWidget(zoomed_widget)
 
+        # Finally, Widgets cannot add widgets, only Layouts can, so our main 
+        # window must have a layout in order to be able to contain these 
+        # widgets. It is also an HBox, because our window will usually be
+        # wider than it is tall. 
+
+        hbox = QHBoxLayout()
+        hbox.addWidget(self.stack)
+
+        self.setLayout(hbox)
 
     def keyPressEvent(self, event):
 
@@ -86,38 +100,15 @@ class Image_Browser(QWidget):
             else:
                 self.update_thumbnail_selection(key)
 
-        elif key == Qt.Key_Return:   
-            if isinstance(self.layout(), Thumbnail_layout):
-                self.setLayout(Zoomed_layout(self))
+        elif key == Qt.Key_Return:
+            if self.stack.currentIndex() == 0:
+                self.stack.setCurrentIndex(1)
             else:
-                self.setLayout(Thumbnail_layout(self))
+                self.stack.setCurrentIndex(0)
 
         elif key == Qt.Key_Escape:
-            if isinstance(self.layout(), Zoomed_layout):
-                self.setLayout(Thumbnail_layout(self))
-        else:
-            return
-
-    def zoomOut(self):
-
-        # Images know how to zoom out. This function may become deprecated as layouts are added
-
-        for image in self.carousel:
-            if image == self.selected_image():
-                image.zoomOut()
-            else:
-                image.show()
-
-    def zoomIn(self):
-
-        # Images know how to zoom in. This function may become deprecated as layouts are added
-
-
-        for image in self.carousel:
-            if image == self.selected_image():
-                image.zoomIn()
-            else:
-                image.hide()
+            if self.stack.currentIndex() == 1:
+                self.stack.setCurrentIndex(0)
 
     def update_thumbnail_selection(self, key):
 

@@ -2,10 +2,6 @@
 An class which represents images and their associated metadata as necessary for display within the image browser. 
 """
 
-# TODO: pylint in VSCode indicates that python cannot find these classes in these modules,
-# but the project runs just fine and other users have encountered the same issue. 
-# It's recognized as a bug with pylint. If it becomes annoying, this can be solved by whitelisting
-# the relevant modules. 
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QLabel, QWidget 
 # TODO: Isolate necessary dependencies from QtCore
