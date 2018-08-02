@@ -14,7 +14,7 @@ class Image(QLabel):
         self.active = False
         self.zoomed = False
         self.setPixmap(QPixmap(image_file))
-        self.tags = tags # Will be a list
+        self.setFocusPolicy(Qt.StrongFocus)
         self.borderWidthThumbnail = 5
         self.borderWidthZoomed = 10
         self.borderColorActive = "yellow"
@@ -22,8 +22,7 @@ class Image(QLabel):
         self.styleActive = "border: {}px solid {}".format(self.borderWidthThumbnail, self.borderColorActive)
         self.styleInactive = "border: {}px solid {}".format(self.borderWidthThumbnail, self.borderColorInactive)
         self.styleZoomed = "border: {}px solid {}".format(self.borderWidthZoomed, self.borderColorActive)
-        self.locX = self.x()
-        self.locY = self.y()
+        
         # TODO: Use QSize for this
         # TODO: Class variable? 
         self.default_size = (parent.width/5, parent.height/4)
