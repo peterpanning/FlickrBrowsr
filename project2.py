@@ -15,10 +15,10 @@
 import sys
 from pathlib import Path 
 from PyQt5.QtWidgets import QApplication
-from ImageBrowser import ImageBrowser
+from Image_Browser import Image_Browser
 
 if __name__ == '__main__':
 
 	app = QApplication(sys.argv)
-	e = ImageBrowser(800, 600, 5)
+	e = Image_Browser(800, 600, 5)
 	sys.exit(app.exec_())
