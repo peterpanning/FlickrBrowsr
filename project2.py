@@ -10,8 +10,6 @@
 # by image, and a longer sound when changing by page. 
 # Tags should be persistent when you close and reopen the program. 
 
-# TODO: Two layout classes: one for thumbnails, one for zoomed images
-
 import sys
 from pathlib import Path 
 from PyQt5.QtWidgets import QApplication

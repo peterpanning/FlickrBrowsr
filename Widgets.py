@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy
+from Image import Image
 
 
 class ThumbnailWidget(QWidget):
@@ -13,8 +14,7 @@ class ThumbnailWidget(QWidget):
         super().__init__()
         # This widget has a QHBoxLayout which allows us to add widgets to the screen. 
         # This layout, at the moment, fills the entire screen. 
-        view_layout = QHBoxLayout()
-        self.setStyleSheet("border: 5px solid red")
+        main_layout = QHBoxLayout()
 
         # We then create a container for the thumbnail images we will later navigate through,
         # which allows us to constrain the size of their QHBoxLayout (otherwise impossible).
@@ -22,32 +22,22 @@ class ThumbnailWidget(QWidget):
         thumbnail_container.move(0, parent.height/3)
         thumbnail_container.setMaximumHeight(parent.height/3)
         thumbnail_container.setMaximumWidth(parent.width)
-        thumbnail_container.setStyleSheet("border: 5px solid orange")
         # We will be viewing multiple ImageLabels in a horizontal row, 
         # and so will use a QHBoxLayout class which seems to be designed 
         # explicitly for this purpose. 
         thumbnails = QHBoxLayout()
-
-        # *****************************************************************************************************************************
-        # TODO: CREATE IMAGELABELS HERE 
-        #******************************************************************************************************************************
-        for i in range(parent.focused_image, parent.focused_image + 5):
-            thumbnails.addWidget(parent.images[i])
-
+        thumbnails.setProperty("max_images", 5)
+        thumbnail_container.setLayout(thumbnails)
+        for i in range(0, thumbnails.property("max_images")):
+            thumbnail = Image(thumbnail_container, parent.pixmaps[i])
+            thumbnails.addWidget(thumbnail)
         # itemAt() returns a WidgetItem, widget() returns the widget that item manages
         # TODO: Command to set stylesheet which doesn't overlap with existing Qt function names
+
         thumbnails.itemAt(0).widget().activate()
-        thumbnail_container.setLayout(thumbnails)
-
-        view_layout.addWidget(thumbnail_container)
-        self.setLayout(view_layout)
-        
-    def insertWidget(self, index, widget):
-        #    View     item      container thumbnails insertion
-        self.layout().itemAt(0).widget().layout().insertWidget(index, widget)
+        main_layout.addWidget(thumbnail_container)
+        self.setLayout(main_layout)
     
-    # TODO: Override sizeHint()?
-
 class ZoomedWidget(QWidget):
         # Zoomed widget also uses a QHBoxLayout, but has no widgets when we 
         # initialize it. This is because widgets can only exist in one layout
@@ -55,7 +45,6 @@ class ZoomedWidget(QWidget):
         # moves the focused Image between widgets as necessary.
     def __init__(self, parent):
         super().__init__()
-        #self.setSizePolicy(QSizePolicy.MinimumExpanding, QSizePolicy.MinimumExpanding)  
-        zoomed = QHBoxLayout()
-        self.setLayout(zoomed)
-        self.setStyleSheet("border: 5px solid green")
+        zoomedLayout = QHBoxLayout()
+        self.setLayout(zoomedLayout)
+        zoomedLayout.setProperty("max_images", 1)
