@@ -1,13 +1,14 @@
 import os
 from Image import Image
+from Widgets import *
 #from Layouts import Thumbnail_layout, Zoomed_layout
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
 
 class Image_Browser(QWidget):
 
-# An ImageBrowser object is a QStackedWidget, and is created when the program is initialized
+# An ImageBrowser widget is our main widget, created when the program is initialized
 
 ### CONSTRUCTOR ###
 
@@ -18,6 +19,8 @@ class Image_Browser(QWidget):
         # It can switch between two layouts: thumbnail or zoomed. 
 
         super().__init__()
+
+        # TODO: Ensure I'm not overriding existing functionality i.e. with width and height
         
         self.width = width
         self.height = height
@@ -50,44 +53,19 @@ class Image_Browser(QWidget):
         self.setAutoFillBackground(True)
         self.setFocusPolicy(Qt.NoFocus)
         p = self.palette()
-        p.setColor(self.backgroundRole(), Qt.blue)
+        p.setColor(self.backgroundRole(), Qt.gray)
         self.setPalette(p)
 
         # Widgets and Layouts for various views
 
-        # We can't change the layout of our main ImageBrowser widget once we've 
-        # chosen it, because the Python wrapper doesn't allow us to delete the 
-        # old layout on demand.
-        # We can, however have multiple widgets, each of which can have
-        # its own layout, which can again contain widgets and/or layouts. 
-
-        # StackedWidget allows us to do this and only display one widget at a time
+        # StackedWidget allows us to display and switch between multiple widgets within 
+        # the same main window
         self.stack = QStackedWidget()
 
-        # TODO: Split this into two additional functions
+        thumbnail_widget = ThumbnailWidget(self)
+        zoomed_widget = ZoomedWidget(self)
 
-        # The thumbnail widget uses a QHBoxLayout to display multiple images at once
-        # TODO: There are some functions and attributes I would like to use 
-        # which must be implemented in subclasses i.e. count
-        thumbnail_widget = QWidget()
-        thumbnail_layout = QHBoxLayout()
-        # TODO: Variable initialization of number of thumbnails
-        for i in range(self.focused_image, self.focused_image + 5):
-            thumbnail_layout.addWidget(self.images[i])
-        # itemAt() returns a WidgetItem, widget() returns the widget that item manages
-        # Activate sets the stylesheet for the Image, and is not related to the Qt activat() function
-        # TODO: Command to set stylesheet which doesn't overlap with existing Qt function names
-        thumbnail_layout.itemAt(0).widget().activate()
-        thumbnail_widget.setLayout(thumbnail_layout)
         self.stack.addWidget(thumbnail_widget)
-        
-        # Zoomed widget also uses a QHBoxLayout, but has no widgets when we 
-        # initialize it. This is because widgets can only exist in one layout
-        # at a time. Switching between widgets(and therefore layouts) later 
-        # moves the focused Image between widgets as necessary.
-        zoomed_widget = QWidget()
-        zoomed_layout = QHBoxLayout()
-        zoomed_widget.setLayout(zoomed_layout)
         self.stack.addWidget(zoomed_widget)
 
         # Finally, we want our main window to have a layout, to be more easily
@@ -106,6 +84,7 @@ class Image_Browser(QWidget):
         key = event.key()
 
         # TODO: One function shared between left and right, using focusNextPreviousChild? 
+        # TODO: Can't change image while zoomed in
         if key == Qt.Key_Left:
             # TODO: Use global variable? QHBox property? 
             if self.focused_image != 0:
@@ -125,24 +104,39 @@ class Image_Browser(QWidget):
 
         # TODO: Return from Zoomed and Escape are identical, should probably just call another function
         elif key == Qt.Key_Return:
+
             # Setting the index on the stack appears to shift focus to that 
             # stack element. By naming the focused image here, we can 
             # explicitly focus it later after changing widgets/layouts.
+
             img = self.focusWidget()
+
             # Zoom In
             if self.stack.currentIndex() == 0:
-                self.stack.setCurrentIndex(1)
                 # We have to add the image to the actual layout, not just the widget
-                self.stack.currentWidget().layout().addWidget(img)
-            else:
+                self.stack.widget(1).layout().addWidget(img)
+                #img.setScaledContents(False)
+                img.setPixmap(img.pixmap().scaled(self.stack.widget(1).size(), Qt.KeepAspectRatio))
+                self.stack.setCurrentIndex(1)
+
             # Zoom Out
+            else:
+                # We want the measurements of the visible QHBoxLayout's container widget 
+                # within the item managed by the layout of the thumbnail screen widget
                 self.stack.setCurrentIndex(0)
-                self.stack.currentWidget().layout().insertWidget(self.focused_image, img)
+                width = self.stack.widget(0).layout().itemAt(0).widget().width()
+                height = self.stack.widget(0).layout().itemAt(0).widget().height()
+                #size = self.stack.widget(0).layout().itemAt(0).widget().size()
+                img.setPixmap(img.pixmap().scaledToHeight(height))
+                self.stack.widget(0).insertWidget(self.focused_image, img)
+                print(img.pixmap().width())
+                print(img.pixmap().height())
             img.setFocus()
             
         elif key == Qt.Key_Escape:
             if self.stack.currentIndex() == 1:
                 img = self.focusWidget()
+                self.stack.widget(0).insertWidget(self.focused_image, img)
+                img.setPixmap(img.pixmap().scaled(self.stack.widget(0).size(), Qt.KeepAspectRatio))
                 self.stack.setCurrentIndex(0)
-                self.stack.currentWidget().layout().insertWidget(self.focused_image, img)
                 img.setFocus()
