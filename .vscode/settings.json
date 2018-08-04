@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/peter/.pyenv/versions/pyQtBrowser/bin/python",
+    "python.pythonPath": "/Users/peter/.pyenv/versions/QtImgViewer/bin/python",
     "python.linting.enabled": false,
     "telemetry.enableTelemetry": false,
     "python.linting.pylintArgs": [

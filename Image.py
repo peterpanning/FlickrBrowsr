@@ -3,61 +3,52 @@ An class which represents images and their associated metadata as necessary for 
 """
 
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QLabel, QWidget 
+from PyQt5.QtWidgets import QLabel, QWidget, QSizePolicy 
 # TODO: Isolate necessary dependencies from QtCore
 from PyQt5.QtCore import *
 
 class Image(QLabel):
-    def __init__(self, parent, image_file = "", tags = []):
-        super().__init__(parent )
-        self.setParent(parent)
-        self.active = False
-        self.zoomed = False
-        self.setPixmap(QPixmap(image_file))
+    borderColorActive = "red"
+    borderColorInactive = "grey"
+    styleString = "border: {}px solid {}"
+    def __init__(self, parent, pixmap, tags = []):
+        super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
-        self.borderWidthThumbnail = 5
-        self.borderWidthZoomed = 10
-        self.borderColorActive = "yellow"
-        self.borderColorInactive = "grey"
-        self.styleActive = "border: {}px solid {}".format(self.borderWidthThumbnail, self.borderColorActive)
-        self.styleInactive = "border: {}px solid {}".format(self.borderWidthThumbnail, self.borderColorInactive)
-        self.styleZoomed = "border: {}px solid {}".format(self.borderWidthZoomed, self.borderColorActive)
+        self.borderWidth = 5
         
-        # TODO: Use QSize for this
-        # TODO: Class variable? 
-        self.default_size = (parent.width/5, parent.height/4)
-        # TODO: Initial location? 
-        self.setPixmap(self.pixmap().scaled(self.default_size[0] - self.borderWidthThumbnail - 2, 
-            self.default_size[1] - self.borderWidthThumbnail - 2, Qt.KeepAspectRatio))
-        self.setAlignment(Qt.AlignCenter)
+        # TODO: Accessors for styles
+        self.styleActive = self.styleString.format(self.borderWidth, Image.borderColorActive)
+        self.styleInactive = self.styleString.format(self.borderWidth, Image.borderColorInactive)
+        pix = pixmap
+
+        layout = parent.layout()
+        margins = layout.getContentsMargins() # Is a tuple of (left, top, right, bottom)
+        max_images = layout.property("max_images")
+        if pix.width() > pix.height():
+            # Bizarrely, an image's final width can be calculated using only the parent's width,
+            # number of images displayed and the spacing between them, without concern for
+            # margins or content padding.
+            pix = pix.scaledToWidth( 
+                ( parent.width() / max_images ) - ((max_images - 1) * layout.spacing())
+                )
+        else:
+            # Final height, on the other hand, needs to know the margins above them. 
+            # Because of course it does. 
+            pix = pix.scaledToHeight(parent.height() - (margins[1] * 2)) 
         self.deactivate()
         self.show()
 
-    def add_tag(self, tag):
-        self.tags.append(tag)
+        self.setPixmap(pix)
+        self.setAlignment(Qt.AlignCenter)
 
-    def resize(self, width, height):
-        super().resize(width, height)
-        self.setPixmap(self.pixmap().scaled(width, height, Qt.KeepAspectRatio))
+    def styleActive(self):
+        return self.styleString.format(self.borderWidth, Image.borderColorActive)
 
-    def setGeometry(self, x, y, width, height):
-        super().setGeometry(x, y, width, height)
-        self.setPixmap(self.pixmap().scaled(width, height, Qt.KeepAspectRatio))
+    def styleActive(self):
+        return self.styleString.format(self.borderWidth, Image.borderColorInactive)
 
     def activate(self):
         self.setStyleSheet(self.styleActive)
 
     def deactivate(self):
         self.setStyleSheet(self.styleInactive)
-
-    def zoomIn(self):
-        self.locX = self.x()
-        self.locY = self.y()
-        self.setGeometry(0, 0, self.parent().width, self.parent().height)
-        self.setStyleSheet(self.styleZoomed)
-        self.zoomed = True
-
-    def zoomOut(self):
-        self.setGeometry(self.locX, self.locY, self.default_size[0], self.default_size[1])
-        self.setStyleSheet(self.styleActive)
-        self.zoomed = False

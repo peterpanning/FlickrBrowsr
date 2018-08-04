@@ -1,13 +1,14 @@
 import os
 from Image import Image
+from Widgets import *
 #from Layouts import Thumbnail_layout, Zoomed_layout
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget
+from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
 
 class Image_Browser(QWidget):
 
-# An ImageBrowser object is a QStackedWidget, and is created when the program is initialized
+# An ImageBrowser widget is our main widget, created when the program is initialized
 
 ### CONSTRUCTOR ###
 
@@ -18,24 +19,24 @@ class Image_Browser(QWidget):
         # It can switch between two layouts: thumbnail or zoomed. 
 
         super().__init__()
+
+        # TODO: Ensure I'm not overriding existing functionality i.e. with width and height
         
         self.width = width
         self.height = height
         self.border = border
         self.data_folder = './data'
-        self.images = []
+        self.pixmaps = []
         self.focused_image = 0
 
         # TODO: Exception handling/input validation on image data
-
+        # TODO: ensure that we only load image files
         # TODO: Load images from an arbitrary folder
+        # TODO: Split file loading into its own function
 
         for file_name in os.listdir(self.data_folder):	
-            # TODO: ensure that we only load image files  
-            # print(file_name)
-            image = Image(self, self.data_folder + "/" + file_name)
-            self.images.append(image)
-
+            pixmap = QPixmap(self.data_folder + "/" + file_name)
+            self.pixmaps.append(pixmap)
         self.initUI(width, height)  
         self.show()
 
@@ -50,44 +51,24 @@ class Image_Browser(QWidget):
         self.setAutoFillBackground(True)
         self.setFocusPolicy(Qt.NoFocus)
         p = self.palette()
-        p.setColor(self.backgroundRole(), Qt.blue)
+        p.setColor(self.backgroundRole(), Qt.gray)
         self.setPalette(p)
+
+        # TODO: Split stack and widget initialization into its own function
 
         # Widgets and Layouts for various views
 
-        # We can't change the layout of our main ImageBrowser widget once we've 
-        # chosen it, because the Python wrapper doesn't allow us to delete the 
-        # old layout on demand.
-        # We can, however have multiple widgets, each of which can have
-        # its own layout, which can again contain widgets and/or layouts. 
+        # StackedWidget allows us to display and switch between multiple widgets within 
+        # the same main window
 
-        # StackedWidget allows us to do this and only display one widget at a time
+        # TODO: Subclass StackedWidget so as to be able to write convenience functions
+        # for accessing Images, particulary when contained within qhboxlayouts
+
         self.stack = QStackedWidget()
+        thumbnail_widget = ThumbnailWidget(self)
+        zoomed_widget = ZoomedWidget(self)
 
-        # TODO: Split this into two additional functions
-
-        # The thumbnail widget uses a QHBoxLayout to display multiple images at once
-        # TODO: There are some functions and attributes I would like to use 
-        # which must be implemented in subclasses i.e. count
-        thumbnail_widget = QWidget()
-        thumbnail_layout = QHBoxLayout()
-        # TODO: Variable initialization of number of thumbnails
-        for i in range(self.focused_image, self.focused_image + 5):
-            thumbnail_layout.addWidget(self.images[i])
-        # itemAt() returns a WidgetItem, widget() returns the widget that item manages
-        # Activate sets the stylesheet for the Image, and is not related to the Qt activat() function
-        # TODO: Command to set stylesheet which doesn't overlap with existing Qt function names
-        thumbnail_layout.itemAt(0).widget().activate()
-        thumbnail_widget.setLayout(thumbnail_layout)
         self.stack.addWidget(thumbnail_widget)
-        
-        # Zoomed widget also uses a QHBoxLayout, but has no widgets when we 
-        # initialize it. This is because widgets can only exist in one layout
-        # at a time. Switching between widgets(and therefore layouts) later 
-        # moves the focused Image between widgets as necessary.
-        zoomed_widget = QWidget()
-        zoomed_layout = QHBoxLayout()
-        zoomed_widget.setLayout(zoomed_layout)
         self.stack.addWidget(zoomed_widget)
 
         # Finally, we want our main window to have a layout, to be more easily
@@ -105,12 +86,12 @@ class Image_Browser(QWidget):
 
         key = event.key()
 
-        # TODO: One function shared between left and right, using focusNextPreviousChild? 
+        # TODO: Change image while zoomed in
+        # TODO: Break into many smaller functions
+        # TODO: Support navigating through an arbitrary number of images
         if key == Qt.Key_Left:
-            # TODO: Use global variable? QHBox property? 
             if self.focused_image != 0:
-                # Sets the style sheet of the widget we are leaving. 
-                # TODO: Change function name, find Qt focus loss events
+                # TODO: Change function name, use Qt focus loss events?
                 self.focusWidget().deactivate()
                 self.focused_image -= 1 
                 self.stack.currentWidget().focusPreviousChild()
@@ -125,24 +106,30 @@ class Image_Browser(QWidget):
 
         # TODO: Return from Zoomed and Escape are identical, should probably just call another function
         elif key == Qt.Key_Return:
-            # Setting the index on the stack appears to shift focus to that 
-            # stack element. By naming the focused image here, we can 
-            # explicitly focus it later after changing widgets/layouts.
-            img = self.focusWidget()
+
+            # It looks like we have to manually give focus to the new image each time we 
+            # change zoom levels. Might be worth looking at later. 
+
             # Zoom In
             if self.stack.currentIndex() == 0:
-                self.stack.setCurrentIndex(1)
+                # TODO: Weird bug with zooming, doesn't zoom to truly full window on the first zoom
+                # TODO: Might have to do with the way the widget is initialized? 
+                zoomed_image = Image(self.stack.widget(1), self.pixmaps[self.focused_image])
                 # We have to add the image to the actual layout, not just the widget
-                self.stack.currentWidget().layout().addWidget(img)
-            else:
+                self.stack.widget(1).layout().addWidget(zoomed_image)
+                self.stack.setCurrentIndex(1)
+                self.stack.widget(1).layout().itemAt(0).widget().setFocus()
+
             # Zoom Out
+            else:
+                old_image = self.stack.widget(1).layout().takeAt(0)
+                old_image.widget().deleteLater()
                 self.stack.setCurrentIndex(0)
-                self.stack.currentWidget().layout().insertWidget(self.focused_image, img)
-            img.setFocus()
-            
+                self.stack.widget(0).layout().itemAt(0).widget().layout().itemAt(self.focused_image).widget().setFocus()
+
         elif key == Qt.Key_Escape:
             if self.stack.currentIndex() == 1:
-                img = self.focusWidget()
+                old_image = self.stack.widget(1).layout().takeAt(0)
+                old_image.widget().deleteLater()
                 self.stack.setCurrentIndex(0)
-                self.stack.currentWidget().layout().insertWidget(self.focused_image, img)
-                img.setFocus()
+                self.stack.widget(0).layout().itemAt(0).widget().layout().itemAt(self.focused_image).widget().setFocus()
