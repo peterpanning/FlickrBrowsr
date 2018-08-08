@@ -17,6 +17,6 @@ from Image_Browser import Image_Browser
 
 if __name__ == '__main__':
 
-	app = QApplication(sys.argv)
-	e = Image_Browser(800, 600, 5)
-	sys.exit(app.exec_())
+	process = QApplication(sys.argv)
+	window = Image_Browser()
+	sys.exit(process.exec_())
