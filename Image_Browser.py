@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedW
 
 class Image_Browser(QWidget):
 
+# TODO: Make Image_Browser a QStackedWidget subclass? 
+
 # An ImageBrowser widget is our main widget, created when the program is initialized
 
 ### CONSTRUCTOR ###
@@ -14,12 +16,12 @@ class Image_Browser(QWidget):
     def __init__(self):
 
         # The ImageBrowser class is the main window which users interact with. 
-        # It can switch between two layouts: thumbnail or zoomed. 
+        # It can switch between two views: thumbnail or zoomed. 
 
         super().__init__()
 
         self.pixmaps = []
-        self.focused_image = 0
+        self.selected_image_index = 0
 
         # StackedWidget allows us to display and switch between multiple widgets within 
         # the same main window
@@ -76,14 +78,15 @@ class Image_Browser(QWidget):
 
         key = event.key()
 
-        # TODO: Change image while zoomed in
         # TODO: Support navigating through an arbitrary number of images
 
         if key == Qt.Key_Left:
-            self.arrowAction("Left")
+            # TODO: Make this self.viewer.currentWidget().selectPreviousImage()
+            self.leftArrowAction()
             
         elif key == Qt.Key_Right:
-            self.arrowAction("Right")
+            # TODO: Make this self.viewer.currentWidget().selectNextImage()
+            self.rightArrowAction()
 
         elif key == Qt.Key_Return:
             if self.viewer.currentWidget() == self.thumbnail_widget:
@@ -94,32 +97,46 @@ class Image_Browser(QWidget):
         elif key == Qt.Key_Escape:
             if self.viewer.currentWidget() == self.zoomed_widget:
                 self.zoomOut()
+                
 
-    def arrowAction(self, direction):
-        self.focusWidget().deactivate()
-        if direction == "Left":
-            if self.focused_image != 0:
-                self.focused_image -= 1 
-                self.viewer.currentWidget().focusPreviousChild()
-        elif direction == "Right":
-            if self.focused_image != 4:
-                self.focused_image += 1
-                self.focusWidget().focusNextChild()
-        self.focusWidget().activate()
-        
+    # TODO: selectImage function which has one implementation in each widget
+
+    def leftArrowAction(self):
+        if self.viewer.currentWidget() == self.thumbnail_widget:
+            self.currentImage().deactivate()
+            self.setSelectedImageIndex(self.selected_image_index - 1)
+            self.currentImage().activate()
+        else:
+            self.setSelectedImageIndex(self.selected_image_index - 1)
+            self.viewer.currentWidget().setImage(self.pixmaps[self.selected_image_index])
+
+    def rightArrowAction(self):
+        if self.viewer.currentWidget() == self.thumbnail_widget:
+            self.currentImage().deactivate()
+            self.setSelectedImageIndex(self.selected_image_index + 1)
+            self.currentImage().activate()
+        else:
+            self.setSelectedImageIndex(self.selected_image_index + 1)
+            self.viewer.currentWidget().setImage(self.pixmaps[self.selected_image_index])
+    
     def zoomOut(self):
         self.viewer.setCurrentWidget(self.thumbnail_widget)
-        # See ThumbnailWidget class for implementation of focusOn()
-        self.viewer.currentWidget().focusOn(self.focused_image)
 
     def zoomIn(self):
-        old_image = self.zoomed_widget.layout().takeAt(0)
-        if old_image:
-            old_image.widget().deleteLater()
-        # TODO: Weird bug with zooming, doesn't zoom to truly full window on the first zoom
-        # Might have to do with the way the widget is initialized? 
-        zoomed_image = Image(self.zoomed_widget, self.pixmaps[self.focused_image])
-        # Have to add the image to the widget's layout, not just the widget
         self.viewer.setCurrentWidget(self.zoomed_widget)
-        self.viewer.currentWidget().layout().addWidget(zoomed_image)
-        self.viewer.currentWidget().layout().itemAt(0).widget().setFocus()
+        # See Zoomed_Widget class for implementation of setImage
+        self.viewer.currentWidget().setImage(self.pixmaps[self.selected_image_index])
+
+    def setSelectedImageIndex(self, new_index):
+        num_pixmaps = len(self.pixmaps)
+        if new_index < 0:
+            self.selected_image_index = num_pixmaps + new_index
+        elif new_index >= num_pixmaps:
+            self.selected_image_index = new_index - num_pixmaps
+        else:
+            self.selected_image_index = new_index
+        self.thumbnail_widget.setSelectedImageIndex(self.selected_image_index)
+        self.zoomed_widget.setSelectedImageIndex(self.selected_image_index)
+
+    def currentImage(self):
+        return self.viewer.currentWidget().currentImage()
