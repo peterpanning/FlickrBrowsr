@@ -5,7 +5,9 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
 
-class Image_Browser(QWidget):
+class Image_Browser(QStackedWidget):
+
+# TODO: Make Image_Browser a QStackedWidget subclass? 
 
 # An ImageBrowser widget is our main widget, created when the program is initialized
 
@@ -14,17 +16,15 @@ class Image_Browser(QWidget):
     def __init__(self):
 
         # The ImageBrowser class is the main window which users interact with. 
-        # It can switch between two layouts: thumbnail or zoomed. 
+        # It can switch between two views: thumbnail or zoomed. 
 
         super().__init__()
 
         self.pixmaps = []
-        self.focused_image = 0
+        self.selected_image_index = 0
 
         # StackedWidget allows us to display and switch between multiple widgets within 
         # the same main window
-
-        self.viewer = QStackedWidget()
 
         self.initData()
         self.initUI()
@@ -32,13 +32,19 @@ class Image_Browser(QWidget):
     
     def initData(self, data_folder='./data'):
 
-        # TODO: Exception handling/input validation on image data
-        # TODO: ensure that we only load image files
         # TODO: Load images from an arbitrary folder
 
-        for file_name in os.listdir(data_folder):	
-            pixmap = QPixmap(data_folder + "/" + file_name)
-            self.pixmaps.append(pixmap)
+        valid_extensions = ["jpeg", "jpg", "png", "bmp"]
+
+        for file_name in sorted(os.listdir(data_folder)):
+            if file_name == ".DS_Store":
+                continue
+            extension = file_name.split(".")[1]
+            if extension in valid_extensions:
+                pixmap = QPixmap(data_folder + "/" + file_name)
+                self.pixmaps.append(pixmap)
+            else:
+                print("Invalid file extension for file {}".format(file_name))
 
     ### UI INITIALIZATION ###
 
@@ -57,15 +63,15 @@ class Image_Browser(QWidget):
         self.thumbnail_widget = ThumbnailWidget(self)
         self.zoomed_widget = ZoomedWidget(self)
 
-        self.viewer.addWidget(self.thumbnail_widget)
-        self.viewer.addWidget(self.zoomed_widget)
+        self.addWidget(self.thumbnail_widget)
+        self.addWidget(self.zoomed_widget)
 
         # Finally, we want our main window to have a layout, to be more easily
         # able to modify it later.
         hbox = QHBoxLayout()
         
-        self.setLayout(hbox)
-        hbox.addWidget(self.viewer)
+        #self.setLayout(hbox)
+        #hbox.addWidget(self.viewer)
 
 
     ### KEYBOARD INPUT ###
@@ -76,50 +82,53 @@ class Image_Browser(QWidget):
 
         key = event.key()
 
-        # TODO: Change image while zoomed in
-        # TODO: Support navigating through an arbitrary number of images
-
         if key == Qt.Key_Left:
-            self.arrowAction("Left")
+            self.setSelectedImageIndex(self.selected_image_index - 1)
+            self.selectPreviousImage()
             
         elif key == Qt.Key_Right:
-            self.arrowAction("Right")
+            self.setSelectedImageIndex(self.selected_image_index + 1)
+            self.selectNextImage()
 
         elif key == Qt.Key_Return:
-            if self.viewer.currentWidget() == self.thumbnail_widget:
+            if self.currentWidget() == self.thumbnail_widget:
                 self.zoomIn()
             else:
                 self.zoomOut()
 
         elif key == Qt.Key_Escape:
-            if self.viewer.currentWidget() == self.zoomed_widget:
+            if self.currentWidget() == self.zoomed_widget:
                 self.zoomOut()
-
-    def arrowAction(self, direction):
-        self.focusWidget().deactivate()
-        if direction == "Left":
-            if self.focused_image != 0:
-                self.focused_image -= 1 
-                self.viewer.currentWidget().focusPreviousChild()
-        elif direction == "Right":
-            if self.focused_image != 4:
-                self.focused_image += 1
-                self.focusWidget().focusNextChild()
-        self.focusWidget().activate()
-        
+                
+    
     def zoomOut(self):
-        self.viewer.setCurrentWidget(self.thumbnail_widget)
-        # See ThumbnailWidget class for implementation of focusOn()
-        self.viewer.currentWidget().focusOn(self.focused_image)
+        # TODO: Zooming out should not deselect the image, and should 
+        # center other thumbnails around it. 
+        self.setCurrentWidget(self.thumbnail_widget)
 
     def zoomIn(self):
-        old_image = self.zoomed_widget.layout().takeAt(0)
-        if old_image:
-            old_image.widget().deleteLater()
-        # TODO: Weird bug with zooming, doesn't zoom to truly full window on the first zoom
-        # Might have to do with the way the widget is initialized? 
-        zoomed_image = Image(self.zoomed_widget, self.pixmaps[self.focused_image])
-        # Have to add the image to the widget's layout, not just the widget
-        self.viewer.setCurrentWidget(self.zoomed_widget)
-        self.viewer.currentWidget().layout().addWidget(zoomed_image)
-        self.viewer.currentWidget().layout().itemAt(0).widget().setFocus()
+        self.setCurrentWidget(self.zoomed_widget)
+        # See Zoomed_Widget class for implementation of setImage
+        self.currentWidget().setImage(self.pixmaps[self.selected_image_index])
+
+    def setSelectedImageIndex(self, new_index):
+        num_pixmaps = len(self.pixmaps)
+        if new_index < 0:
+            self.selected_image_index = num_pixmaps + new_index
+        elif new_index >= num_pixmaps:
+            self.selected_image_index = new_index - num_pixmaps
+        else:
+            self.selected_image_index = new_index
+        self.thumbnail_widget.setSelectedImageIndex(self.selected_image_index)
+        self.zoomed_widget.setSelectedImageIndex(self.selected_image_index)
+
+    def currentImage(self):
+        return self.currentWidget().currentImage()
+
+    def selectNextImage(self):
+        self.thumbnail_widget.selectNextImage()
+        self.zoomed_widget.selectNextImage()
+
+    def selectPreviousImage(self):
+        self.thumbnail_widget.selectPreviousImage()
+        self.zoomed_widget.selectPreviousImage()

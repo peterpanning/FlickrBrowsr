@@ -4,49 +4,96 @@ from Image import Image
 
 
 class ThumbnailWidget(QWidget):
-    # TODO: This class may as well be called a ThumbnailScreen, because it represents everything
-    # visible in the ImageBrowser window when viewing images as thumbnails. 
-    # TODO: There are some functions and attributes I would like to use 
-    # which must be implemented in subclasses i.e. count
-    # TODO: Variable initialization of number of thumbnails
-    # Activate sets the stylesheet for the Image, and is not related to the Qt activat() function
+
+    # Activate sets the stylesheet for the Image, and is not related to the Qt activate() function
     # TODO: Command to set stylesheet which doesn't overlap with existing Qt function names
+
     def __init__(self, parent):
         # TODO: Split init function into multiple functions
-        super().__init__()
-        self.setFocusPolicy(Qt.NoFocus)
-        # This widget has a QHBoxLayout which allows us to add widgets to the screen. 
-        # This layout, at the moment, fills the entire screen. 
+        super().__init__(parent)
+        self.setFocusPolicy(Qt.StrongFocus)
+        self.selected_image_index = 0
+        self.selected_thumbnail = 0
+        # Pixmaps are for offscreen processing anyways, copying them here shouldn't make a huge
+        # difference and allows us to create new Images lazily 
+        self.pixmaps = parent.pixmaps  
+
         main_layout = QHBoxLayout()
 
-        # We then create a container for the thumbnail images we will later navigate through,
-        # which allows us to constrain the size of their QHBoxLayout (otherwise impossible).
+        # Create a container for the thumbnail images to constrain the height 
+        # of the layout
+        # TODO: Container must not have a parent, for reasons unknown.
         thumbnail_container = QWidget()
         thumbnail_container.move(0, parent.height()/3)
         thumbnail_container.setMaximumHeight(parent.height()/3)
         thumbnail_container.setMaximumWidth(parent.width())
-        # We will be viewing multiple ImageLabels in a horizontal row, 
-        # and so will use a QHBoxLayout class which seems to be designed 
-        # explicitly for this purpose. 
-        thumbnails = QHBoxLayout()
-        thumbnails.setProperty("max_images", 5)
-        thumbnail_container.setLayout(thumbnails)
-
-        #### Move this
-
-        for i in range(0, thumbnails.property("max_images")):
-            thumbnail = Image(thumbnail_container, parent.pixmaps[i])
-            thumbnails.addWidget(thumbnail)
-        # itemAt() returns a WidgetItem, widget() returns the widget that item manages
-        # TODO: Command to set stylesheet which doesn't overlap with existing Qt function names
-
-        thumbnails.itemAt(0).widget().activate()
+        thumbnail_container.setLayout(QHBoxLayout())
+        # TODO: Set this with a global variable/read from file?
+        thumbnail_container.layout().setProperty("max_thumbnails", 5)
 
         main_layout.addWidget(thumbnail_container)
         self.setLayout(main_layout)
 
-    def focusOn(self, focusedImage):
-        self.layout().itemAt(0).widget().layout().itemAt(focusedImage).widget().setFocus()
+        for i in range(0, thumbnail_container.layout().property("max_thumbnails")):
+            self.addImage(self.pixmaps[i])
+
+        # itemAt() returns a WidgetItem, widget() returns the widget that item manages
+        self.currentImage().activate()
+
+    def currentImage(self):
+        # TODO: Change this to return the selected thumbnail
+        return self.thumbnail_layout().itemAt(self.selected_thumbnail).widget()
+
+    def thumbnail_container(self):
+        return self.layout().itemAt(0).widget()
+
+    def thumbnail_layout(self):
+        return self.thumbnail_container().layout()
+
+    def addImage(self, pixmap):
+        thumbnail = Image(self.thumbnail_container(), pixmap)
+        self.thumbnail_layout().addWidget(thumbnail)
+
+    def selectNextImage(self):
+        if self.selected_thumbnail == 4:
+            self.selected_thumbnail = 0
+            self.loadThumbnails()
+        else:
+            self.currentImage().deactivate()
+            self.selected_thumbnail += 1
+        self.currentImage().activate()
+    
+    def selectPreviousImage(self):
+        if self.selected_thumbnail == 0:
+            self.selected_thumbnail = 4
+            self.loadThumbnails()
+        else:
+            self.currentImage().deactivate()
+            self.selected_thumbnail -= 1
+        self.currentImage().activate()
+        
+    def nextPage(self):
+        self.loadThumbnails() 
+    def previousPage(self):
+        self.loadThumbnails()
+
+    def loadThumbnails(self):
+        # load pixmaps around selected thumbnail
+        first_index = self.selected_image_index - self.selected_thumbnail
+        last_index = self.selected_image_index + (self.thumbnail_layout().property("max_thumbnails") - self.selected_thumbnail)
+        for i in range(0, self.thumbnail_layout().property("max_thumbnails")):
+            old_image = self.thumbnail_layout().takeAt(0)
+            if old_image:
+                old_image.widget().deleteLater()
+        for i in range(first_index, last_index):
+            try:
+                self.addImage(self.pixmaps[i])
+            except IndexError as e:
+                self.addImage(self.pixmaps[i - len(self.pixmaps)])
+        self.currentImage().activate()
+
+    def setSelectedImageIndex(self, index):
+        self.selected_image_index = index
 
     
 class ZoomedWidget(QWidget):
@@ -59,7 +106,30 @@ class ZoomedWidget(QWidget):
     # moves the focused Image between widgets as necessary.
     def __init__(self, parent):
         super().__init__()
-        self.setFocusPolicy(Qt.NoFocus)
+        self.selected_image_index = 0
+        self.setFocusPolicy(Qt.StrongFocus)
         zoomedLayout = QHBoxLayout()
         self.setLayout(zoomedLayout)
-        zoomedLayout.setProperty("max_images", 1)
+        self.pixmaps = parent.pixmaps
+
+    def setImage(self, pixmap):
+        old_image = self.layout().takeAt(0)
+        if old_image:
+            old_image.widget().deleteLater()
+        # TODO: Weird bug with zooming, doesn't zoom to truly full window on the first zoom
+        # Might have to do with the way the widget is initialized? 
+        zoomed_image = Image(self, pixmap)
+        # Have to add the image to the widget's layout, not just the widget
+        self.layout().addWidget(zoomed_image)
+        self.layout().itemAt(0).widget().activate()
+
+    def currentImage(self):
+        return self.layout().itemAt(0).widget()
+
+    def setSelectedImageIndex(self, index):
+        self.selected_image_index = index
+
+    def selectNextImage(self):
+        self.setImage(self.pixmaps[self.selected_image_index])
+    def selectPreviousImage(self):
+        self.setImage(self.pixmaps[self.selected_image_index])

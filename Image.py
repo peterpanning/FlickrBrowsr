@@ -13,7 +13,7 @@ class Image(QLabel):
         
         super().__init__(parent)
         
-        self.setFocusPolicy(Qt.StrongFocus)
+        self.setFocusPolicy(Qt.NoFocus)
         self.setAlignment(Qt.AlignCenter)
         self.resizeToParent(parent, pixmap)
         self.deactivate()
@@ -30,20 +30,23 @@ class Image(QLabel):
     def resizeToParent(self, parent, pixmap):
         
         # Resizing an Image's pixmap scales them based on the larger of their width or height
-        pix = pixmap
         layout = parent.layout()
         margins = layout.getContentsMargins() # Is a tuple of (left, top, right, bottom)
-        max_images = layout.property("max_images")
+        max_thumbnails = layout.property("max_thumbnails")
+        if not max_thumbnails:
+            max_thumbnails = 1
+            
         # Each image's new width is a function of the width of its parent widget, 
         # the spacing, maximum number of images, and margins of that widget's layout, 
         # and the width of the image's border. 
-        width = ( ( parent.width() - ( layout.spacing() * ( max_images - 1 ) + 
-            ( margins[0] * 2 ) ) ) / max_images ) - ( Image.borderWidth * 2 )
+
+        width = ( ( parent.width() - ( layout.spacing() * ( max_thumbnails - 1 ) + 
+            ( margins[0] * 2 ) ) ) / max_thumbnails ) - ( Image.borderWidth * 2 )
         # The height is much simpler in comparison
         height = ( parent.height() - ( margins[1] * 2 ) - ( Image.borderWidth * 2 ) )
 
-        if pix.width() > pix.height():
-            pix = pix.scaledToWidth(width)
+        if pixmap.height() > pixmap.width():
+            pixmap = pixmap.scaledToHeight(height)
         else:
-            pix = pix.scaledToHeight(height)
-        self.setPixmap(pix)
+            pixmap = pixmap.scaledToWidth(width)
+        self.setPixmap(pixmap)
