@@ -19,8 +19,6 @@ class Image(QLabel):
         self.deactivate()
         self.show()
 
-    # TODO: Can I use focus to accomplish this? 
-
     def activate(self):
         active = Image.styleString.format(Image.borderWidth, Image.borderColorActive)
         self.setStyleSheet(active)
@@ -32,31 +30,23 @@ class Image(QLabel):
     def resizeToParent(self, parent, pixmap):
         
         # Resizing an Image's pixmap scales them based on the larger of their width or height
-        pix = pixmap
         layout = parent.layout()
         margins = layout.getContentsMargins() # Is a tuple of (left, top, right, bottom)
         max_thumbnails = layout.property("max_thumbnails")
         if not max_thumbnails:
             max_thumbnails = 1
+            
         # Each image's new width is a function of the width of its parent widget, 
         # the spacing, maximum number of images, and margins of that widget's layout, 
         # and the width of the image's border. 
+
         width = ( ( parent.width() - ( layout.spacing() * ( max_thumbnails - 1 ) + 
             ( margins[0] * 2 ) ) ) / max_thumbnails ) - ( Image.borderWidth * 2 )
         # The height is much simpler in comparison
         height = ( parent.height() - ( margins[1] * 2 ) - ( Image.borderWidth * 2 ) )
 
-        if pix.width() > pix.height():
-            pix = pix.scaledToWidth(width)
+        if pixmap.height() > pixmap.width():
+            pixmap = pixmap.scaledToHeight(height)
         else:
-            pix = pix.scaledToHeight(height)
-        self.setPixmap(pix)
-"""
-    def focusInEvent(self, event):
-        active = Image.styleString.format(Image.borderWidth, Image.borderColorActive)
-        self.setStyleSheet(active)
-
-    def focusOutEvent(self, event):
-        inactive = Image.styleString.format(Image.borderWidth, Image.borderColorInactive)
-        self.setStyleSheet(inactive)
-"""
+            pixmap = pixmap.scaledToWidth(width)
+        self.setPixmap(pixmap)
