@@ -8,6 +8,8 @@ class ThumbnailWidget(QWidget):
     # Activate sets the stylesheet for the Image, and is not related to the Qt activate() function
     # TODO: Command to set stylesheet which doesn't overlap with existing Qt function names
 
+    # TODO: Should have a list of Images in order to more easily manipulate them
+
     def __init__(self, parent):
         # TODO: Split init function into multiple functions
         super().__init__(parent)
@@ -37,7 +39,7 @@ class ThumbnailWidget(QWidget):
         for i in range(0, thumbnail_container.layout().property("max_thumbnails")):
             self.addImage(self.pixmaps[i])
 
-        # itemAt() returns a WidgetItem, widget() returns the widget that item manages
+        # itemAt() returns a LayoutItem, widget() returns the widget that item manages
         self.currentImage().activate()
 
     def currentImage(self):
@@ -88,7 +90,7 @@ class ThumbnailWidget(QWidget):
         for i in range(first_index, last_index):
             try:
                 self.addImage(self.pixmaps[i])
-            except IndexError as e:
+            except IndexError:
                 self.addImage(self.pixmaps[i - len(self.pixmaps)])
         self.currentImage().activate()
 
@@ -100,10 +102,12 @@ class ZoomedWidget(QWidget):
     # TODO: Rewrite this as a QStackedWidget which has a different fullscreen 
     # child widget for each image, allowing us to use the builtin
     # focusPreviousChild behavior to change widgets? 
+
     # Zoomed widget also uses a QHBoxLayout, but has no widgets when we 
     # initialize it. This is because widgets can only exist in one layout
     # at a time. Switching between widgets(and therefore layouts) later 
     # moves the focused Image between widgets as necessary.
+
     def __init__(self, parent):
         super().__init__()
         self.selected_image_index = 0
@@ -111,13 +115,13 @@ class ZoomedWidget(QWidget):
         zoomedLayout = QHBoxLayout()
         self.setLayout(zoomedLayout)
         self.pixmaps = parent.pixmaps
+        self.setMaximumSize(parent.width(), parent.height())
+        self.setImage(self.pixmaps[0])
 
     def setImage(self, pixmap):
         old_image = self.layout().takeAt(0)
         if old_image:
             old_image.widget().deleteLater()
-        # TODO: Weird bug with zooming, doesn't zoom to truly full window on the first zoom
-        # Might have to do with the way the widget is initialized? 
         zoomed_image = Image(self, pixmap)
         # Have to add the image to the widget's layout, not just the widget
         self.layout().addWidget(zoomed_image)
