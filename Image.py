@@ -3,6 +3,8 @@ from PyQt5.QtWidgets import QLabel, QWidget, QSizePolicy
 from PyQt5.QtCore import *
 
 class Image(QLabel):
+
+    # TODO: Subclass into Thumbnails and ZoomedImages
     
     borderColorActive = "red"
     borderColorInactive = "grey"
@@ -12,10 +14,10 @@ class Image(QLabel):
     def __init__(self, parent, pixmap, tags = []):
         
         super().__init__(parent)
-        
+        self.pixmap = pixmap
         self.setFocusPolicy(Qt.NoFocus)
         self.setAlignment(Qt.AlignCenter)
-        self.resizeToParent(parent, pixmap)
+        self.resizeToParent()
         self.deactivate()
         self.show()
 
@@ -26,12 +28,15 @@ class Image(QLabel):
     def deactivate(self):
         inactive = Image.styleString.format(Image.borderWidth, Image.borderColorInactive)
         self.setStyleSheet(inactive)
-
-    def resizeToParent(self, parent, pixmap):
+    
+    # TODO: Call this function whenever layout might change, i.e. when loading thumbnails
+    def resizeToParent(self):
         
         # Resizing an Image's pixmap scales them based on the larger of their width or height
+        parent = self.parent()
         layout = parent.layout()
         margins = layout.getContentsMargins() # Is a tuple of (left, top, right, bottom)
+        # TODO: Rename max_thumbnails prop to max_images and add to zoomed layout
         max_thumbnails = layout.property("max_thumbnails")
         if not max_thumbnails:
             max_thumbnails = 1
@@ -45,8 +50,11 @@ class Image(QLabel):
         # The height is much simpler in comparison
         height = ( parent.height() - ( margins[1] * 2 ) - ( Image.borderWidth * 2 ) )
 
-        if pixmap.height() > pixmap.width():
-            pixmap = pixmap.scaledToHeight(height)
+        if self.pixmap.height() > self.pixmap.width():
+            self.pixmap = self.pixmap.scaledToHeight(height)
+        elif self.pixmap.width() > self.pixmap.height():
+            self.pixmap = self.pixmap.scaledToWidth(width)
         else:
-            pixmap = pixmap.scaledToWidth(width)
-        self.setPixmap(pixmap)
+            lesser = min(width, height)
+            self.pixmap = self.pixmap.scaled(lesser, lesser, Qt.KeepAspectRatio)
+        self.setPixmap(self.pixmap)

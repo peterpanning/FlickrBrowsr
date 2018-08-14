@@ -59,20 +59,13 @@ class Image_Browser(QStackedWidget):
         p = self.palette()
         p.setColor(self.backgroundRole(), Qt.gray)
         self.setPalette(p)
+        self.setMaximumSize(1920, 1080)
 
         self.thumbnail_widget = ThumbnailWidget(self)
         self.zoomed_widget = ZoomedWidget(self)
 
         self.addWidget(self.thumbnail_widget)
         self.addWidget(self.zoomed_widget)
-
-        # Finally, we want our main window to have a layout, to be more easily
-        # able to modify it later.
-        hbox = QHBoxLayout()
-        
-        #self.setLayout(hbox)
-        #hbox.addWidget(self.viewer)
-
 
     ### KEYBOARD INPUT ###
     
@@ -102,14 +95,10 @@ class Image_Browser(QStackedWidget):
                 
     
     def zoomOut(self):
-        # TODO: Zooming out should not deselect the image, and should 
-        # center other thumbnails around it. 
         self.setCurrentWidget(self.thumbnail_widget)
 
     def zoomIn(self):
         self.setCurrentWidget(self.zoomed_widget)
-        # See Zoomed_Widget class for implementation of setImage
-        self.currentWidget().setImage(self.pixmaps[self.selected_image_index])
 
     def setSelectedImageIndex(self, new_index):
         num_pixmaps = len(self.pixmaps)
