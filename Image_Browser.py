@@ -6,9 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
 
 class Image_Browser(QStackedWidget):
-
-# TODO: Make Image_Browser a QStackedWidget subclass? 
-
+    
 # An ImageBrowser widget is our main widget, created when the program is initialized
 
 ### CONSTRUCTOR ###

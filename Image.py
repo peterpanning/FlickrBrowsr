@@ -4,32 +4,35 @@ from PyQt5.QtCore import *
 
 class Image(QLabel):
 
-    # TODO: Subclass into Thumbnails and ZoomedImages
-    
+    # TODO: Set initial size and fixed aspect ratio for label, 
+    # resize pixmap within those dimensions?
+
     borderColorActive = "red"
     borderColorInactive = "grey"
-    borderWidth = 4
     styleString = "border: {}px solid {}"
     
-    def __init__(self, parent, pixmap, tags = []):
+    def __init__(self, parent, pixmap):
         
         super().__init__(parent)
         self.pixmap = pixmap
         self.setFocusPolicy(Qt.NoFocus)
         self.setAlignment(Qt.AlignCenter)
-        self.resizeToParent()
+        self.borderWidth = 3
         self.deactivate()
         self.show()
 
     def activate(self):
-        active = Image.styleString.format(Image.borderWidth, Image.borderColorActive)
+        active = Image.styleString.format(self.borderWidth, Image.borderColorActive)
         self.setStyleSheet(active)
 
     def deactivate(self):
-        inactive = Image.styleString.format(Image.borderWidth, Image.borderColorInactive)
+        inactive = Image.styleString.format(self.borderWidth, Image.borderColorInactive)
         self.setStyleSheet(inactive)
-    
-    # TODO: Call this function whenever layout might change, i.e. when loading thumbnails
+
+class Thumbnail(Image):
+    def __init__(self, parent, pixmap):
+        super().__init__(parent, pixmap)
+        self.resizeToParent()
     def resizeToParent(self):
         
         # Resizing an Image's pixmap scales them based on the larger of their width or height
@@ -46,9 +49,31 @@ class Image(QLabel):
         # and the width of the image's border. 
 
         width = ( ( parent.width() - ( layout.spacing() * ( max_thumbnails - 1 ) + 
-            ( margins[0] * 2 ) ) ) / max_thumbnails ) - ( Image.borderWidth * 2 )
+            ( margins[0] * 2 ) ) ) / max_thumbnails ) - ( self.borderWidth * 2 )
         # The height is much simpler in comparison
-        height = ( parent.height() - ( margins[1] * 2 ) - ( Image.borderWidth * 2 ) )
+        height = ( parent.height() - ( margins[1] * 2 ) - ( self.borderWidth * 2 ) )
+
+        if self.pixmap.height() > self.pixmap.width():
+            self.pixmap = self.pixmap.scaledToHeight(height)
+        elif self.pixmap.width() > self.pixmap.height():
+            self.pixmap = self.pixmap.scaledToWidth(width)
+        else:
+            lesser = min(width, height)
+            self.pixmap = self.pixmap.scaled(lesser, lesser, Qt.KeepAspectRatio)
+        self.setPixmap(self.pixmap)
+        
+class ZoomedImage(Image):
+    def __init__(self, parent, pixmap):
+        super().__init__(parent, pixmap) 
+        self.borderWidth = 10
+        self.resizeToParent()
+    
+    def resizeToParent(self):
+        # Resizing an Image's pixmap scales them based on the larger of their width or height
+        
+        margins = self.parent().layout().getContentsMargins() # A tuple of [left, top, right, bottom]
+        width = self.parent().width() - (self.borderWidth * 2) - (margins[0] * 2)
+        height = self.parent().height() - (self.borderWidth * 2) - (margins[1] * 2)
 
         if self.pixmap.height() > self.pixmap.width():
             self.pixmap = self.pixmap.scaledToHeight(height)

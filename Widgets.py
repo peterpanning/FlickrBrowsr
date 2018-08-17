@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy
 from PyQt5.QtCore import *
-from Image import Image
+from Image import Image, Thumbnail, ZoomedImage
 
 
 class ThumbnailWidget(QWidget):
@@ -14,6 +14,7 @@ class ThumbnailWidget(QWidget):
         # TODO: Split init function into multiple functions
         super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
+        self.setGeometry(parent.geometry())
         self.selected_image_index = 0
         self.selected_thumbnail = 0
         # Pixmaps are for offscreen processing anyways, copying them here shouldn't make a huge
@@ -24,9 +25,8 @@ class ThumbnailWidget(QWidget):
 
         # Create a container for the thumbnail images to constrain the height 
         # of the layout
-        # TODO: Container must not have a parent, for reasons unknown.
-        thumbnail_container = QWidget()
-        thumbnail_container.move(0, parent.height()/3)
+        thumbnail_container = QWidget(self)
+        thumbnail_container.setGeometry(0, parent.height()/3, parent.width(), parent.height()/3)
         thumbnail_container.setMaximumHeight(parent.height()/3)
         thumbnail_container.setMaximumWidth(parent.width())
         thumbnail_container.setLayout(QHBoxLayout())
@@ -53,7 +53,7 @@ class ThumbnailWidget(QWidget):
         return self.thumbnail_container().layout()
 
     def addImage(self, pixmap):
-        thumbnail = Image(self.thumbnail_container(), pixmap)
+        thumbnail = Thumbnail(self.thumbnail_container(), pixmap)
         self.thumbnail_layout().addWidget(thumbnail)
 
     def selectNextImage(self):
@@ -98,6 +98,10 @@ class ThumbnailWidget(QWidget):
         self.selected_image_index = index
 
     
+class TaggingWidget(QWidget):
+    def __init__(self, parent):
+        super().init(parent)
+
 class ZoomedWidget(QWidget):
     # TODO: Rewrite this as a QStackedWidget which has a different fullscreen 
     # child widget for each image, allowing us to use the builtin
@@ -109,10 +113,11 @@ class ZoomedWidget(QWidget):
     # moves the focused Image between widgets as necessary.
 
     def __init__(self, parent):
-        super().__init__()
+        super().__init__(parent)
         self.selected_image_index = 0
         self.setFocusPolicy(Qt.StrongFocus)
-        zoomedLayout = QHBoxLayout()
+        self.setGeometry(parent.geometry())
+        zoomedLayout = QGridLayout()
         self.setLayout(zoomedLayout)
         self.pixmaps = parent.pixmaps
         self.setMaximumSize(parent.width(), parent.height())
@@ -122,7 +127,7 @@ class ZoomedWidget(QWidget):
         old_image = self.layout().takeAt(0)
         if old_image:
             old_image.widget().deleteLater()
-        zoomed_image = Image(self, pixmap)
+        zoomed_image = ZoomedImage(self, pixmap)
         # Have to add the image to the widget's layout, not just the widget
         self.layout().addWidget(zoomed_image)
         self.layout().itemAt(0).widget().activate()
