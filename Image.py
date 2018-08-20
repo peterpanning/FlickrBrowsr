@@ -10,14 +10,16 @@ class Image(QLabel):
     borderColorActive = "red"
     borderColorInactive = "grey"
     styleString = "border: {}px solid {}"
-    
-    def __init__(self, parent, pixmap):
+    # TODO: Parameter order should match QLabel parameter order
+    def __init__(self, parent=None, pixmap=None):
         
         super().__init__(parent)
+        # TODO: QLabels have a pixmap() function, is this really necessary?
         self.pixmap = pixmap
         self.setFocusPolicy(Qt.NoFocus)
         self.setAlignment(Qt.AlignCenter)
         self.borderWidth = 3
+        self.tags = []
         self.deactivate()
         self.show()
 

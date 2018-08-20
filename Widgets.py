@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy
+from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy, QVBoxLayout, QLineEdit, QLabel
 from PyQt5.QtCore import *
 from Image import Image, Thumbnail, ZoomedImage
 
@@ -97,33 +97,80 @@ class ThumbnailWidget(QWidget):
     def setSelectedImageIndex(self, index):
         self.selected_image_index = index
 
-    
-class TaggingWidget(QWidget):
-    def __init__(self, parent):
-        super().init(parent)
+# TODO: Make a TagList, TagAdd, and TagView Widget. 
+class TagListWidget(QWidget):
+    # TagLists are widgets which display all of the tags a user has added to an Image. 
+    def __init__(self, parent=None, tags=None):
+        # Parent is a QWidget
+        # tags is a list of strings which describe an associated image. 
+        super().__init__(parent)
+        #self.setGeometry(parent.width()*3/4, parent.y(), parent.width()/4, parent.height())
+        main_layout = QVBoxLayout()
+        self.setLayout(main_layout)
+        tag_container = QWidget(self)
+        # TODO: Use try/catch
+        if parent:
+            tag_container.setFixedWidth(parent.width()/4)
+        else:
+            tag_container.setFixedWidth(200)
+        tag_container.setLayout(QVBoxLayout())
+        if tags:
+            for tag in tags:
+                t = QLabel(tag, self)
+                tag_layout.addWidget(t)
+        else:
+            t = QLabel("No tags found", self)
+            self.layout().addWidget(t)
+
+class TagWidget(QWidget):
+    # TagWidget is the full-window widget which contains a zoomed image, its tags, and the option
+    # to add new tags to that image. 
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.pixmaps = parent.pixmaps
+        self.setGeometry(parent.geometry())
+        self.setLayout(QGridLayout())
+        self.zoomed = ZoomedWidget(self)
+        self.layout().addWidget(self.zoomed, 0, 0)
+        tags = []
+        try:
+            tags = self.zoomed.currentImage().tags
+        except AttributeError as e:
+            print(e)
+        tlw = TagListWidget(self, tags) 
+        self.layout().addWidget(tlw, 0, 1)
+
+    def setImage(self, pixmap):
+        self.zoomed.setImage(pixmap)
+
+    def currentImage(self):
+        return self.zoomed.currentImage()
+
+    def setSelectedImageIndex(self, index):
+        self.zoomed.setSelectedImageIndex(index)
+
+    def selectNextImage(self):
+        self.zoomed.selectNextImage()
+
+    def selectPreviousImage(self):
+        self.zoomed.selectPreviousImage()
+
 
 class ZoomedWidget(QWidget):
-    # TODO: Rewrite this as a QStackedWidget which has a different fullscreen 
-    # child widget for each image, allowing us to use the builtin
-    # focusPreviousChild behavior to change widgets? 
 
-    # Zoomed widget also uses a QHBoxLayout, but has no widgets when we 
-    # initialize it. This is because widgets can only exist in one layout
-    # at a time. Switching between widgets(and therefore layouts) later 
-    # moves the focused Image between widgets as necessary.
-
-    def __init__(self, parent):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.selected_image_index = 0
         self.setFocusPolicy(Qt.StrongFocus)
         self.setGeometry(parent.geometry())
-        zoomedLayout = QGridLayout()
-        self.setLayout(zoomedLayout)
+        layout = QHBoxLayout()
+        self.setLayout(layout)
         self.pixmaps = parent.pixmaps
-        self.setMaximumSize(parent.width(), parent.height())
+        self.setMaximumSize(parent.width()*3/4, parent.height())
         self.setImage(self.pixmaps[0])
 
     def setImage(self, pixmap):
+        # TODO: Use replaceWidget()?
         old_image = self.layout().takeAt(0)
         if old_image:
             old_image.widget().deleteLater()

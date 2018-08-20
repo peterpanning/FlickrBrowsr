@@ -6,7 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
 
 class Image_Browser(QStackedWidget):
-    
+
 # An ImageBrowser widget is our main widget, created when the program is initialized
 
 ### CONSTRUCTOR ###
@@ -60,10 +60,10 @@ class Image_Browser(QStackedWidget):
         self.setMaximumSize(1920, 1080)
 
         self.thumbnail_widget = ThumbnailWidget(self)
-        self.zoomed_widget = ZoomedWidget(self)
+        self.tag_widget = TagWidget(self)
 
         self.addWidget(self.thumbnail_widget)
-        self.addWidget(self.zoomed_widget)
+        self.addWidget(self.tag_widget)
 
     ### KEYBOARD INPUT ###
     
@@ -88,7 +88,7 @@ class Image_Browser(QStackedWidget):
                 self.zoomOut()
 
         elif key == Qt.Key_Escape:
-            if self.currentWidget() == self.zoomed_widget:
+            if self.currentWidget() == self.tag_widget:
                 self.zoomOut()
                 
     
@@ -96,7 +96,7 @@ class Image_Browser(QStackedWidget):
         self.setCurrentWidget(self.thumbnail_widget)
 
     def zoomIn(self):
-        self.setCurrentWidget(self.zoomed_widget)
+        self.setCurrentWidget(self.tag_widget)
 
     def setSelectedImageIndex(self, new_index):
         num_pixmaps = len(self.pixmaps)
@@ -107,15 +107,15 @@ class Image_Browser(QStackedWidget):
         else:
             self.selected_image_index = new_index
         self.thumbnail_widget.setSelectedImageIndex(self.selected_image_index)
-        self.zoomed_widget.setSelectedImageIndex(self.selected_image_index)
+        self.tag_widget.setSelectedImageIndex(self.selected_image_index)
 
     def currentImage(self):
         return self.currentWidget().currentImage()
 
     def selectNextImage(self):
         self.thumbnail_widget.selectNextImage()
-        self.zoomed_widget.selectNextImage()
+        self.tag_widget.selectNextImage()
 
     def selectPreviousImage(self):
         self.thumbnail_widget.selectPreviousImage()
-        self.zoomed_widget.selectPreviousImage()
+        self.tag_widget.selectPreviousImage()
