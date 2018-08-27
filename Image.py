@@ -23,6 +23,20 @@ class Image(QLabel):
         self.deactivate()
         self.show()
 
+    # Images can have tags as part of their metadata. Interacting with these tags occurs through CRUD operations. 
+
+    def readTags(self):
+        pass
+    
+    def updateTags(self):
+        pass
+
+    def deleteTags(self):
+        pass
+
+    def createTags(self):
+        pass
+
     def activate(self):
         active = Image.styleString.format(self.borderWidth, Image.borderColorActive)
         self.setStyleSheet(active)

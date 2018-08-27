@@ -18,6 +18,8 @@ class Image_Browser(QStackedWidget):
 
         super().__init__()
 
+        # TODO: Pixmaps => Images to allow for reading/writing of tags, convert to pixmaps in widgets where necessary
+
         self.pixmaps = []
         self.selected_image_index = 0
 
