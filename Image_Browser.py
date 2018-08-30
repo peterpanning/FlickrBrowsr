@@ -18,6 +18,7 @@ class Image_Browser(QStackedWidget):
 
         super().__init__()
 
+        self.images = []
         self.pixmaps = []
         self.selected_image_index = 0
 
@@ -34,12 +35,18 @@ class Image_Browser(QStackedWidget):
 
         valid_extensions = ["jpeg", "jpg", "png", "bmp"]
 
-        for file_name in sorted(os.listdir(data_folder)):
+        file_names = sorted(os.listdir(data_folder))
+
+        for file_name in file_names:
             if file_name == ".DS_Store":
                 continue
             extension = file_name.split(".")[1]
             if extension in valid_extensions:
-                pixmap = QPixmap(data_folder + "/" + file_name)
+                # TODO: Also create images and read tags
+                full_path = data_folder + "/" + file_name
+                image = QImage(full_path)
+                pixmap = QPixmap(full_path)
+                self.images.append(full_path)
                 self.pixmaps.append(pixmap)
             else:
                 print("Invalid file extension for file {}".format(file_name))
