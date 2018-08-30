@@ -101,14 +101,15 @@ class ThumbnailWidget(QWidget):
 class TagListWidget(QWidget):
     # TagLists are widgets which display all of the tags a user has added to an Image. 
     def __init__(self, parent=None, tags=None):
+        # TODO: Alignment
         # Parent is a QWidget
         # tags is a list of strings which describe an associated image. 
+        # TODO: Case for parent=None, case for existing parent? 
         super().__init__(parent)
-        #self.setGeometry(parent.width()*3/4, parent.y(), parent.width()/4, parent.height())
+        self.setFixedWidth(parent.width()/4)
         main_layout = QVBoxLayout()
         self.setLayout(main_layout)
         tag_container = QWidget(self)
-        # TODO: Use try/catch
         if parent:
             tag_container.setFixedWidth(parent.width()/4)
         else:
@@ -138,8 +139,7 @@ class TagWidget(QWidget):
         except AttributeError as e:
             print(e)
         tlw = TagListWidget(self, tags) 
-        self.layout().addWidget(tlw, 0, 1)
-
+        self.layout().addWidget(tlw, 0, 3)
     def setImage(self, pixmap):
         self.zoomed.setImage(pixmap)
 
@@ -166,7 +166,8 @@ class ZoomedWidget(QWidget):
         layout = QHBoxLayout()
         self.setLayout(layout)
         self.pixmaps = parent.pixmaps
-        self.setMaximumSize(parent.width()*3/4, parent.height())
+        #self.setFixedWidth(parent.width()*3/4)
+        self.setMaximumHeight(parent.height())
         self.setImage(self.pixmaps[0])
 
     def setImage(self, pixmap):
