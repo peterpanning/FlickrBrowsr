@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy, QVBoxLayout, QLineEdit, QLabel
+from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy, QVBoxLayout, QLineEdit, QLabel, QPushButton
 from PyQt5.QtCore import *
 from Image import Image, Thumbnail, ZoomedImage
 
@@ -104,7 +104,14 @@ class TagListWidget(QWidget):
         # TODO: Alignment
         # Parent is a QWidget
         # tags is a list of strings which describe an associated image. 
-        # TODO: Case for parent=None, case for existing parent? 
+        # TODO: Case for parent=None
+
+        # We should never modify the QLabels associated with this object. 
+        # QLabels should be deleted or new ones constructed as necessary,
+        # if we even interact with them at that level at all. 
+        # It may be easier to just create a new TagListWidget each time 
+        # an image is updated with a new tag. Premature optimization is the root of all evil. 
+
         super().__init__(parent)
         self.setFixedWidth(parent.width()/4)
         main_layout = QVBoxLayout()
@@ -118,7 +125,7 @@ class TagListWidget(QWidget):
         if tags:
             for tag in tags:
                 t = QLabel(tag, self)
-                tag_layout.addWidget(t)
+                self.layout().addWidget(t)
         else:
             t = QLabel("No tags found", self)
             self.layout().addWidget(t)
@@ -140,6 +147,9 @@ class TagWidget(QWidget):
             print(e)
         tlw = TagListWidget(self, tags) 
         self.layout().addWidget(tlw, 0, 3)
+        taw = TagAddWidget(self)
+        self.layout().addWidget(taw, 1, 0)
+
     def setImage(self, pixmap):
         self.zoomed.setImage(pixmap)
 
@@ -154,6 +164,26 @@ class TagWidget(QWidget):
 
     def selectPreviousImage(self):
         self.zoomed.selectPreviousImage()
+
+class TagAddWidget(QWidget):
+    
+    # TagAddWidget is a widget composed of a QLineEdit and a button (maybe)
+    # which, when clicked, adds a tag to the currently selected QImage and 
+    # displayed list of tags. 
+    
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(600, 100)
+        self.setLayout(QHBoxLayout())
+        self.tagLine = QLineEdit(self)
+        self.tagButtonAdd = QPushButton("Add Tag", self)
+        self.tagButtonAdd.clicked.connect(self.handleButton)
+
+        self.layout().addWidget(self.tagLine)
+        self.layout().addWidget(self.tagButtonAdd)
+
+    def handleButton(self):
+        print("Now we're thinking with Python")
 
 
 class ZoomedWidget(QWidget):

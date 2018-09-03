@@ -4,6 +4,8 @@ from PyQt5.QtCore import *
 
 class Image(QLabel):
 
+    # TODO: Images do not need QImages, they only need their list of tags
+
     # TODO: Set initial size and fixed aspect ratio for label, 
     # resize pixmap within those dimensions?
 
@@ -22,6 +24,8 @@ class Image(QLabel):
         self.tags = []
         self.deactivate()
         self.show()
+
+    # TODO: Most recent ideation of tags does not use this implementation.
 
     # Images can have tags as part of their metadata. Interacting with these tags occurs through CRUD operations. 
 

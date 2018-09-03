@@ -9,6 +9,10 @@ class Image_Browser(QStackedWidget):
 
 # An ImageBrowser widget is our main widget, created when the program is initialized
 
+# StackedWidget allows us to display and switch between multiple widgets within 
+# the same main window
+
+
 ### CONSTRUCTOR ###
 
     def __init__(self):
@@ -18,12 +22,18 @@ class Image_Browser(QStackedWidget):
 
         super().__init__()
 
-        self.images = []
+        # Use of QImages allows us to CRUD image file tags. 
+
+        self.qimages = []
+
+        # TODO: Pixmaps can be generated from QImages
+
+        # TODO: Doesn't really make sense to maintain a list of pixmaps, considering we 
+        # can generate them on demand and will more often be interacting with our 
+        # Image class anyways. 
+
         self.pixmaps = []
         self.selected_image_index = 0
-
-        # StackedWidget allows us to display and switch between multiple widgets within 
-        # the same main window
 
         self.initData()
         self.initUI()
@@ -37,6 +47,11 @@ class Image_Browser(QStackedWidget):
 
         file_names = sorted(os.listdir(data_folder))
 
+        # Creating only QImages and then Images from there
+        # could allow us to save only those QImages and Images
+        # rather than pixmaps, which makes more sense as those are
+        # data representations and custom objects. 
+
         for file_name in file_names:
             if file_name == ".DS_Store":
                 continue
@@ -44,9 +59,9 @@ class Image_Browser(QStackedWidget):
             if extension in valid_extensions:
                 # TODO: Also create images and read tags
                 full_path = data_folder + "/" + file_name
-                image = QImage(full_path)
+                qimage = QImage(full_path)
                 pixmap = QPixmap(full_path)
-                self.images.append(full_path)
+                self.qimages.append(qimage)
                 self.pixmaps.append(pixmap)
             else:
                 print("Invalid file extension for file {}".format(file_name))
@@ -97,7 +112,12 @@ class Image_Browser(QStackedWidget):
         elif key == Qt.Key_Escape:
             if self.currentWidget() == self.tag_widget:
                 self.zoomOut()
-                
+
+    # TODO: Image_browser provides GUI for tag CRUD operations. Operations require
+    # CRUD via QImages 
+
+    # TODO: Use selected_image as index to select correct list of tags for 
+    # display on widget. 
     
     def zoomOut(self):
         self.setCurrentWidget(self.thumbnail_widget)
