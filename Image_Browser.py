@@ -22,24 +22,9 @@ class Image_Browser(QStackedWidget):
 
         super().__init__()
 
-        # Use of QImages allows us to CRUD image file tags. 
-
-        self.qimages = []
-
-        # Storing file names allows us to more easily access them later for 
-        # reading/writing. Alternatively, this could be part of the Image 
-        # implementation. 
-
-        self.file_names = []
-
-        # TODO: Pixmaps can be generated from QImages
-
-        # TODO: Doesn't really make sense to maintain a list of pixmaps, considering we 
-        # can generate them on demand and will more often be interacting with our 
-        # Image class anyways. 
-
-        self.pixmaps = []
         self.selected_image_index = 0
+
+        self.images = []
 
         self.initData()
         self.initUI()
@@ -47,33 +32,14 @@ class Image_Browser(QStackedWidget):
     
     def initData(self, data_folder='./data'):
 
-        # TODO: Get valid extensions from QImage documentation, 
-        # see if we even need to check these here
-
-        valid_extensions = ["jpeg", "jpg", "png", "bmp"]
-
         file_names = sorted(os.listdir(data_folder))
-
-        # Creating only QImages and then Images from there
-        # could allow us to save only those QImages and Images
-        # rather than pixmaps, which makes more sense as those are
-        # data representations and custom objects. 
 
         for file_name in file_names:
             if file_name == ".DS_Store":
                 continue
-            extension = file_name.split(".")[1]
-            if extension in valid_extensions:
-                # TODO: Also create images and read tags
-                full_path = data_folder + "/" + file_name
-                qimage = QImage(full_path)
-                pixmap = QPixmap(full_path)
-                self.file_names.append(full_path)
-                self.qimages.append(qimage)
-                self.pixmaps.append(pixmap)
-            else:
-                print("Invalid file extension for file {}".format(file_name))
-        print(self.selectedQImage().text("PyQtBrowserTags"))
+            full_path = data_folder + "/" + file_name
+            image = Image(self, full_path)
+            self.images.append(image)
 
     ### UI INITIALIZATION ###
 
@@ -122,25 +88,6 @@ class Image_Browser(QStackedWidget):
             if self.currentWidget() == self.tag_widget:
                 self.zoomOut()
 
-    # TODO: Image_browser provides GUI for tag CRUD operations. Operations require
-    # CRUD via QImages  
-
-    def addTag(self, tag):
-        #selectedQImage = self.qimages[self.selected_image_index]
-        #print("Selected Image: {}".format(selectedQImage))
-        #print("Tag: {}".format(tag))
-        file_name = self.file_names[self.selected_image_index]
-        old_tags = self.imageTags()
-        if old_tags:
-            #print("Old Tags: {}".format(old_tags))
-            #old_tags.append(tag)
-            old_tags = old_tags + ", {}".format(tag)
-            self.selectedQImage().setText("PyQtBrowserTags", old_tags)
-        else:
-
-            self.selectedQImage().setText("PyQtBrowserTags", tag)
-        self.selectedQImage().save(file_name)
-        print("New Tags: {}".format(self.imageTags()))
         
     def zoomOut(self):
         self.setCurrentWidget(self.thumbnail_widget)
@@ -149,24 +96,19 @@ class Image_Browser(QStackedWidget):
         self.setCurrentWidget(self.tag_widget)
 
     def setSelectedImageIndex(self, new_index):
-        num_pixmaps = len(self.pixmaps)
+        num_images = len(self.images)
         if new_index < 0:
-            self.selected_image_index = num_pixmaps + new_index
-        elif new_index >= num_pixmaps:
-            self.selected_image_index = new_index - num_pixmaps
+            self.selected_image_index = num_images + new_index
+        elif new_index >= num_images:
+            self.selected_image_index = new_index - num_images
         else:
             self.selected_image_index = new_index
+        # TODO: Widgets get selected image index from parent? 
         self.thumbnail_widget.setSelectedImageIndex(self.selected_image_index)
         self.tag_widget.setSelectedImageIndex(self.selected_image_index)
 
     def currentImage(self):
         return self.currentWidget().currentImage()
-    
-    def selectedQImage(self):
-        return self.qimages[self.selected_image_index]
-
-    def imageTags(self):
-        return self.selectedQImage().text("PyQtBrowserTags")
 
     def selectNextImage(self):
         self.thumbnail_widget.selectNextImage()

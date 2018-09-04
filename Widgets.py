@@ -19,7 +19,8 @@ class ThumbnailWidget(QWidget):
         self.selected_thumbnail = 0
         # Pixmaps are for offscreen processing anyways, copying them here shouldn't make a huge
         # difference and allows us to create new Images lazily 
-        self.pixmaps = parent.pixmaps  
+        #self.pixmaps = parent.pixmaps  
+        self.images = parent.images
 
         main_layout = QHBoxLayout()
 
@@ -37,13 +38,14 @@ class ThumbnailWidget(QWidget):
         self.setLayout(main_layout)
 
         for i in range(0, thumbnail_container.layout().property("max_thumbnails")):
-            self.addImage(self.pixmaps[i])
+            # TODO: Better initialization of Widget to avoid referring to parent
+            self.addImage(parent.images[i])
 
-        # itemAt() returns a LayoutItem, widget() returns the widget that item manages
         self.currentImage().activate()
 
     def currentImage(self):
         # TODO: Change this to return the selected thumbnail
+        # itemAt() returns a LayoutItem, widget() returns the widget that item manages
         return self.thumbnail_layout().itemAt(self.selected_thumbnail).widget()
 
     def thumbnail_container(self):
@@ -52,8 +54,8 @@ class ThumbnailWidget(QWidget):
     def thumbnail_layout(self):
         return self.thumbnail_container().layout()
 
-    def addImage(self, pixmap):
-        thumbnail = Thumbnail(self.thumbnail_container(), pixmap)
+    def addImage(self, image):
+        thumbnail = Thumbnail(self.thumbnail_container(), image)
         self.thumbnail_layout().addWidget(thumbnail)
 
     def selectNextImage(self):
@@ -89,9 +91,9 @@ class ThumbnailWidget(QWidget):
                 old_image.widget().deleteLater()
         for i in range(first_index, last_index):
             try:
-                self.addImage(self.pixmaps[i])
+                self.addImage(self.images[i])
             except IndexError:
-                self.addImage(self.pixmaps[i - len(self.pixmaps)])
+                self.addImage(self.images[i - len(self.images)])
         self.currentImage().activate()
 
     def setSelectedImageIndex(self, index):
@@ -137,14 +139,15 @@ class TagView(QWidget):
         # TODO: Rearchitect this widget to have the information it needs whenever possible, 
         # considering it is one of our main views. 
         super().__init__(parent)
-        self.pixmaps = parent.pixmaps
+        #self.pixmaps = parent.pixmaps
+        self.images = parent.images
         self.setGeometry(parent.geometry())
         self.setLayout(QGridLayout())
         self.zoomed = ZoomedWidget(self)
         self.layout().addWidget(self.zoomed, 0, 0)
         tags = ""
         try:
-            tags = parent.selectedQImage().text("PyQtBrowserTags")
+            tags = self.zoomed.currentImage().qimage.text("PyQtBrowserTags")
             tags = tags.split(", ")
         except AttributeError as e:
             print(e)
@@ -154,14 +157,16 @@ class TagView(QWidget):
         self.layout().addWidget(taw, 1, 0)
 
     def addTag(self, tag):
-        self.parent().addTag(tag)
+        self.currentImage().addTag(tag)
+        self.updateTags()
 
-    def setImage(self, pixmap):
-        self.zoomed.setImage(pixmap)
+    def setImage(self, image):
+        self.zoomed.setImage(image)
 
     def currentImage(self):
         return self.zoomed.currentImage()
 
+    # TODO: Continue rearchitecting this class to avoid functions like this
     def setSelectedImageIndex(self, index):
         self.zoomed.setSelectedImageIndex(index)
 
@@ -172,8 +177,8 @@ class TagView(QWidget):
         self.zoomed.selectPreviousImage()
 
     def updateTags(self):
-        newTags = parent.selectedQImage().text()
-        newList = TagListWidget(self, tags)
+        newTags = self.currentImage().text("PyQtBrowserTags")
+        newList = TagListWidget(self, newTags)
         
 
 class TagAddWidget(QWidget):
@@ -211,16 +216,17 @@ class ZoomedWidget(QWidget):
         self.setGeometry(parent.geometry())
         layout = QHBoxLayout()
         self.setLayout(layout)
-        self.pixmaps = parent.pixmaps
+        #self.pixmaps = parent.pixmaps
+        self.images = parent.images
         self.setMaximumHeight(parent.height())
-        self.setImage(self.pixmaps[0])
+        self.setImage(self.images[0])
 
-    def setImage(self, pixmap):
+    def setImage(self, image):
         # TODO: Use replaceWidget()?
         old_image = self.layout().takeAt(0)
         if old_image:
             old_image.widget().deleteLater()
-        zoomed_image = ZoomedImage(self, pixmap)
+        zoomed_image = ZoomedImage(self, image)
         # Have to add the image to the widget's layout, not just the widget
         self.layout().addWidget(zoomed_image)
         self.layout().itemAt(0).widget().activate()
@@ -232,6 +238,6 @@ class ZoomedWidget(QWidget):
         self.selected_image_index = index
 
     def selectNextImage(self):
-        self.setImage(self.pixmaps[self.selected_image_index])
+        self.setImage(self.images[self.selected_image_index])
     def selectPreviousImage(self):
-        self.setImage(self.pixmaps[self.selected_image_index])
+        self.setImage(self.images[self.selected_image_index])
