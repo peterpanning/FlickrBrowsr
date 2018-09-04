@@ -26,6 +26,12 @@ class Image_Browser(QStackedWidget):
 
         self.qimages = []
 
+        # Storing file names allows us to more easily access them later for 
+        # reading/writing. Alternatively, this could be part of the Image 
+        # implementation. 
+
+        self.file_names = []
+
         # TODO: Pixmaps can be generated from QImages
 
         # TODO: Doesn't really make sense to maintain a list of pixmaps, considering we 
@@ -41,7 +47,8 @@ class Image_Browser(QStackedWidget):
     
     def initData(self, data_folder='./data'):
 
-        # TODO: Load images from an arbitrary folder
+        # TODO: Get valid extensions from QImage documentation, 
+        # see if we even need to check these here
 
         valid_extensions = ["jpeg", "jpg", "png", "bmp"]
 
@@ -61,10 +68,12 @@ class Image_Browser(QStackedWidget):
                 full_path = data_folder + "/" + file_name
                 qimage = QImage(full_path)
                 pixmap = QPixmap(full_path)
+                self.file_names.append(full_path)
                 self.qimages.append(qimage)
                 self.pixmaps.append(pixmap)
             else:
                 print("Invalid file extension for file {}".format(file_name))
+        print(self.selectedQImage().text("PyQtBrowserTags"))
 
     ### UI INITIALIZATION ###
 
@@ -82,7 +91,7 @@ class Image_Browser(QStackedWidget):
         self.setMaximumSize(1920, 1080)
 
         self.thumbnail_widget = ThumbnailWidget(self)
-        self.tag_widget = TagWidget(self)
+        self.tag_widget = TagView(self)
 
         self.addWidget(self.thumbnail_widget)
         self.addWidget(self.tag_widget)
@@ -114,11 +123,25 @@ class Image_Browser(QStackedWidget):
                 self.zoomOut()
 
     # TODO: Image_browser provides GUI for tag CRUD operations. Operations require
-    # CRUD via QImages 
+    # CRUD via QImages  
 
-    # TODO: Use selected_image as index to select correct list of tags for 
-    # display on widget. 
-    
+    def addTag(self, tag):
+        #selectedQImage = self.qimages[self.selected_image_index]
+        #print("Selected Image: {}".format(selectedQImage))
+        #print("Tag: {}".format(tag))
+        file_name = self.file_names[self.selected_image_index]
+        old_tags = self.imageTags()
+        if old_tags:
+            #print("Old Tags: {}".format(old_tags))
+            #old_tags.append(tag)
+            old_tags = old_tags + ", {}".format(tag)
+            self.selectedQImage().setText("PyQtBrowserTags", old_tags)
+        else:
+
+            self.selectedQImage().setText("PyQtBrowserTags", tag)
+        self.selectedQImage().save(file_name)
+        print("New Tags: {}".format(self.imageTags()))
+        
     def zoomOut(self):
         self.setCurrentWidget(self.thumbnail_widget)
 
@@ -138,6 +161,12 @@ class Image_Browser(QStackedWidget):
 
     def currentImage(self):
         return self.currentWidget().currentImage()
+    
+    def selectedQImage(self):
+        return self.qimages[self.selected_image_index]
+
+    def imageTags(self):
+        return self.selectedQImage().text("PyQtBrowserTags")
 
     def selectNextImage(self):
         self.thumbnail_widget.selectNextImage()
