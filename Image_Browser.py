@@ -7,9 +7,11 @@ from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedW
 
 class Image_Browser(QStackedWidget):
 
-# TODO: Make Image_Browser a QStackedWidget subclass? 
-
 # An ImageBrowser widget is our main widget, created when the program is initialized
+
+# StackedWidget allows us to display and switch between multiple widgets within 
+# the same main window
+
 
 ### CONSTRUCTOR ###
 
@@ -20,11 +22,8 @@ class Image_Browser(QStackedWidget):
 
         super().__init__()
 
-        self.pixmaps = []
         self.selected_image_index = 0
-
-        # StackedWidget allows us to display and switch between multiple widgets within 
-        # the same main window
+        self.images = []
 
         self.initData()
         self.initUI()
@@ -32,19 +31,14 @@ class Image_Browser(QStackedWidget):
     
     def initData(self, data_folder='./data'):
 
-        # TODO: Load images from an arbitrary folder
+        file_names = sorted(os.listdir(data_folder))
 
-        valid_extensions = ["jpeg", "jpg", "png", "bmp"]
-
-        for file_name in sorted(os.listdir(data_folder)):
+        for file_name in file_names:
             if file_name == ".DS_Store":
                 continue
-            extension = file_name.split(".")[1]
-            if extension in valid_extensions:
-                pixmap = QPixmap(data_folder + "/" + file_name)
-                self.pixmaps.append(pixmap)
-            else:
-                print("Invalid file extension for file {}".format(file_name))
+            full_path = data_folder + "/" + file_name
+            image = Image(self, full_path)
+            self.images.append(image)
 
     ### UI INITIALIZATION ###
 
@@ -62,10 +56,10 @@ class Image_Browser(QStackedWidget):
         self.setMaximumSize(1920, 1080)
 
         self.thumbnail_widget = ThumbnailWidget(self)
-        self.zoomed_widget = ZoomedWidget(self)
+        self.tag_widget = TagView(self)
 
         self.addWidget(self.thumbnail_widget)
-        self.addWidget(self.zoomed_widget)
+        self.addWidget(self.tag_widget)
 
     ### KEYBOARD INPUT ###
     
@@ -76,11 +70,9 @@ class Image_Browser(QStackedWidget):
         key = event.key()
 
         if key == Qt.Key_Left:
-            self.setSelectedImageIndex(self.selected_image_index - 1)
             self.selectPreviousImage()
             
         elif key == Qt.Key_Right:
-            self.setSelectedImageIndex(self.selected_image_index + 1)
             self.selectNextImage()
 
         elif key == Qt.Key_Return:
@@ -90,34 +82,54 @@ class Image_Browser(QStackedWidget):
                 self.zoomOut()
 
         elif key == Qt.Key_Escape:
-            if self.currentWidget() == self.zoomed_widget:
+            if self.currentWidget() == self.tag_widget:
                 self.zoomOut()
-                
-    
+
+        elif key == Qt.Key_Comma:
+            if self.currentWidget() == self.thumbnail_widget:
+                self.selectPreviousPage()
+            else:
+                pass
+                # Play error sound
+        
+        elif key == Qt. Key_Period:
+            if self.currentWidget() == self.thumbnail_widget:
+                self.selectNextPage()
+            else:
+                pass
+                # Play error sound
+
+        
     def zoomOut(self):
         self.setCurrentWidget(self.thumbnail_widget)
 
     def zoomIn(self):
-        self.setCurrentWidget(self.zoomed_widget)
+        self.setCurrentWidget(self.tag_widget)
 
     def setSelectedImageIndex(self, new_index):
-        num_pixmaps = len(self.pixmaps)
+        num_images = len(self.images)
         if new_index < 0:
-            self.selected_image_index = num_pixmaps + new_index
-        elif new_index >= num_pixmaps:
-            self.selected_image_index = new_index - num_pixmaps
+            self.selected_image_index = num_images + new_index
+        elif new_index >= num_images:
+            self.selected_image_index = new_index - num_images
         else:
             self.selected_image_index = new_index
-        self.thumbnail_widget.setSelectedImageIndex(self.selected_image_index)
-        self.zoomed_widget.setSelectedImageIndex(self.selected_image_index)
 
     def currentImage(self):
-        return self.currentWidget().currentImage()
+        return self.images[self.selected_image_index]
 
     def selectNextImage(self):
+        self.setSelectedImageIndex(self.selected_image_index + 1)
         self.thumbnail_widget.selectNextImage()
-        self.zoomed_widget.selectNextImage()
+        self.tag_widget.update()
 
     def selectPreviousImage(self):
+        self.setSelectedImageIndex(self.selected_image_index - 1)
         self.thumbnail_widget.selectPreviousImage()
-        self.zoomed_widget.selectPreviousImage()
+        self.tag_widget.update()
+
+    def selectNextPage(self):
+        pass
+    
+    def selectPreviousPage(self):
+        pass
