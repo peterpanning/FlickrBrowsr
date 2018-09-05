@@ -14,25 +14,26 @@ class ThumbnailWidget(QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         self.setGeometry(parent.geometry())
         self.selected_thumbnail = 0
-        self.images = parent.images
 
         main_layout = QHBoxLayout()
+        self.setLayout(main_layout)
 
         # Create a container for the thumbnail images to constrain the height 
         # of the layout
         thumbnail_container = QWidget(self)
+        thumbnail_container.setLayout(QHBoxLayout())
         thumbnail_container.setGeometry(0, parent.height()/3, parent.width(), parent.height()/3)
         thumbnail_container.setMaximumHeight(parent.height()/3)
         thumbnail_container.setMaximumWidth(parent.width())
-        thumbnail_container.setLayout(QHBoxLayout())
+        
         # TODO: Set this with a global variable/read from file?
-        thumbnail_container.layout().setProperty("max_thumbnails", 5)
+        # Setting this as a layout property makes it easier to access in the Image class
+        thumbnail_container.layout().setProperty("max_thumbnails", parent.max_thumbnails)
 
         main_layout.addWidget(thumbnail_container)
-        self.setLayout(main_layout)
-
-        for i in range(0, thumbnail_container.layout().property("max_thumbnails")):
-            self.addImage(self.images[i])
+        
+        for i in range(0, parent.max_thumbnails):
+            self.loadThumbnail(parent.images[i])
 
         self.currentImage().activate()
 
@@ -47,7 +48,7 @@ class ThumbnailWidget(QWidget):
     def thumbnail_layout(self):
         return self.thumbnail_container().layout()
 
-    def addImage(self, image):
+    def loadThumbnail(self, image):
         thumbnail = Thumbnail(self.thumbnail_container(), image)
         self.thumbnail_layout().addWidget(thumbnail)
 
@@ -68,26 +69,20 @@ class ThumbnailWidget(QWidget):
             self.currentImage().deactivate()
             self.selected_thumbnail -= 1
         self.currentImage().activate()
-        
-    def nextPage(self):
-        self.loadThumbnails() 
-    
-    def previousPage(self):
-        self.loadThumbnails()
 
     def loadThumbnails(self):
         # load pixmaps around selected thumbnail
         first_index = self.parent().selected_image_index - self.selected_thumbnail
-        last_index = self.parent().selected_image_index + (self.thumbnail_layout().property("max_thumbnails") - self.selected_thumbnail)
-        for i in range(0, self.thumbnail_layout().property("max_thumbnails")):
+        last_index = self.parent().selected_image_index + (self.parent().max_thumbnails - self.selected_thumbnail)
+        for i in range(0, self.parent().max_thumbnails):
             old_image = self.thumbnail_layout().takeAt(0)
             if old_image:
                 old_image.widget().deleteLater()
         for i in range(first_index, last_index):
             try:
-                self.addImage(self.images[i])
+                self.loadThumbnail(self.parent().images[i])
             except IndexError:
-                self.addImage(self.images[i - len(self.images)])
+                self.loadThumbnail(self.parent().images[i - len(self.parent().images)])
         self.currentImage().activate()
 
 class TagListWidget(QWidget):
