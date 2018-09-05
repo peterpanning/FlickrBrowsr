@@ -23,7 +23,6 @@ class Image_Browser(QStackedWidget):
         super().__init__()
 
         self.selected_image_index = 0
-
         self.images = []
 
         self.initData()
@@ -71,11 +70,9 @@ class Image_Browser(QStackedWidget):
         key = event.key()
 
         if key == Qt.Key_Left:
-            self.setSelectedImageIndex(self.selected_image_index - 1)
             self.selectPreviousImage()
             
         elif key == Qt.Key_Right:
-            self.setSelectedImageIndex(self.selected_image_index + 1)
             self.selectNextImage()
 
         elif key == Qt.Key_Return:
@@ -103,17 +100,16 @@ class Image_Browser(QStackedWidget):
             self.selected_image_index = new_index - num_images
         else:
             self.selected_image_index = new_index
-        # TODO: Widgets get selected image index from parent? 
-        self.thumbnail_widget.setSelectedImageIndex(self.selected_image_index)
-        self.tag_widget.setSelectedImageIndex(self.selected_image_index)
 
     def currentImage(self):
-        return self.currentWidget().currentImage()
+        return self.images[self.selected_image_index]
 
     def selectNextImage(self):
+        self.setSelectedImageIndex(self.selected_image_index + 1)
         self.thumbnail_widget.selectNextImage()
-        self.tag_widget.selectNextImage()
+        self.tag_widget.update()
 
     def selectPreviousImage(self):
+        self.setSelectedImageIndex(self.selected_image_index - 1)
         self.thumbnail_widget.selectPreviousImage()
-        self.tag_widget.selectPreviousImage()
+        self.tag_widget.update()

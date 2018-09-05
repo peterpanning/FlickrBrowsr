@@ -15,11 +15,7 @@ class ThumbnailWidget(QWidget):
         super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setGeometry(parent.geometry())
-        self.selected_image_index = 0
         self.selected_thumbnail = 0
-        # Pixmaps are for offscreen processing anyways, copying them here shouldn't make a huge
-        # difference and allows us to create new Images lazily 
-        #self.pixmaps = parent.pixmaps  
         self.images = parent.images
 
         main_layout = QHBoxLayout()
@@ -38,8 +34,8 @@ class ThumbnailWidget(QWidget):
         self.setLayout(main_layout)
 
         for i in range(0, thumbnail_container.layout().property("max_thumbnails")):
-            # TODO: Better initialization of Widget to avoid referring to parent
-            self.addImage(parent.images[i])
+            # TODO: List of images as initialization parameter? 
+            self.addImage(self.images[i])
 
         self.currentImage().activate()
 
@@ -83,8 +79,8 @@ class ThumbnailWidget(QWidget):
 
     def loadThumbnails(self):
         # load pixmaps around selected thumbnail
-        first_index = self.selected_image_index - self.selected_thumbnail
-        last_index = self.selected_image_index + (self.thumbnail_layout().property("max_thumbnails") - self.selected_thumbnail)
+        first_index = self.parent().selected_image_index - self.selected_thumbnail
+        last_index = self.parent().selected_image_index + (self.thumbnail_layout().property("max_thumbnails") - self.selected_thumbnail)
         for i in range(0, self.thumbnail_layout().property("max_thumbnails")):
             old_image = self.thumbnail_layout().takeAt(0)
             if old_image:
@@ -99,95 +95,86 @@ class ThumbnailWidget(QWidget):
     def setSelectedImageIndex(self, index):
         self.selected_image_index = index
 
-# TODO: Make a TagList, TagAdd, and TagView Widget. 
 class TagListWidget(QWidget):
     # TagLists are widgets which display all of the tags a user has added to an Image. 
-    def __init__(self, parent=None, tags=None):
-        # TODO: Alignment
+    def __init__(self, parent, tags=None):
+        
         # Parent is a QWidget
         # tags is a list of strings which describe an associated image. 
-        # TODO: Case for parent=None
-
-        # We should never modify the QLabels associated with this object. 
-        # QLabels should be deleted or new ones constructed as necessary,
-        # if we even interact with them at that level at all. 
-        # It may be easier to just create a new TagListWidget each time 
-        # an image is updated with a new tag. Premature optimization is the root of all evil. 
 
         super().__init__(parent)
         self.setFixedWidth(parent.width()/4)
-        main_layout = QVBoxLayout()
-        self.setLayout(main_layout)
+        # TODO: Alignment
+
+        # Widget needs a layout to be able to contain tags
+        self.setLayout(QVBoxLayout())
+        # Need a container to restrict the size of the tag layout (layouts don't have width)
         tag_container = QWidget(self)
         if parent:
             tag_container.setFixedWidth(parent.width()/4)
         else:
             tag_container.setFixedWidth(200)
-        tag_container.setLayout(QVBoxLayout())
-        if tags:
-            for tag in tags:
-                t = QLabel(tag, self)
-                self.layout().addWidget(t)
-        else:
-            t = QLabel("No tags found", self)
-            self.layout().addWidget(t)
+        # Need to be able to access the layout later to manipulate tags
+        self.tag_layout = QVBoxLayout()
+        tag_container.setLayout(self.tag_layout)
+        for tag in tags:
+            t = QLabel(tag, self)
+            self.tag_layout.addWidget(t)
+        self.layout().addWidget(tag_container)
+
+    def setTags(self, new_tags=None):
+        tag = self.tag_layout.takeAt(0).widget()
+        tag.deleteLater()
+        for tag in new_tags:
+            t = QLabel(tag, self)
+            self.tag_layout.addWidget(t)
+
 
 class TagView(QWidget):
     # TagView is the full-window widget which contains a zoomed image, its tags, and the option
     # to add new tags to that image. 
-    def __init__(self, parent=None):
-        # TODO: Rearchitect this widget to have the information it needs whenever possible, 
-        # considering it is one of our main views. 
+    def __init__(self, parent):
         super().__init__(parent)
-        #self.pixmaps = parent.pixmaps
-        self.images = parent.images
         self.setGeometry(parent.geometry())
         self.setLayout(QGridLayout())
-        self.zoomed = ZoomedWidget(self)
+        image = parent.currentImage()
+        self.zoomed = ZoomedWidget(self, image)
         self.layout().addWidget(self.zoomed, 0, 0)
         tags = ""
         try:
-            tags = self.zoomed.currentImage().qimage.text("PyQtBrowserTags")
-            tags = tags.split(", ")
+            tags = image.readTags()
         except AttributeError as e:
             print(e)
-        tlw = TagListWidget(self, tags) 
-        self.layout().addWidget(tlw, 0, 3)
+        self.tlw = TagListWidget(self, tags) 
+        self.layout().addWidget(self.tlw, 0, 3)
         taw = TagAddWidget(self)
         self.layout().addWidget(taw, 1, 0)
 
     def addTag(self, tag):
-        self.currentImage().addTag(tag)
+        self.parent().currentImage().addTag(tag)
         self.updateTags()
 
     def setImage(self, image):
         self.zoomed.setImage(image)
 
-    def currentImage(self):
-        return self.zoomed.currentImage()
-
-    # TODO: Continue rearchitecting this class to avoid functions like this
-    def setSelectedImageIndex(self, index):
-        self.zoomed.setSelectedImageIndex(index)
-
-    def selectNextImage(self):
-        self.zoomed.selectNextImage()
-
-    def selectPreviousImage(self):
-        self.zoomed.selectPreviousImage()
+    def update(self):
+        self.setImage(self.parent().currentImage())
+        self.updateTags()
 
     def updateTags(self):
-        newTags = self.currentImage().text("PyQtBrowserTags")
-        newList = TagListWidget(self, newTags)
+        new_tags = self.parent().currentImage().readTags()
+        self.tlw.setTags(new_tags)
         
 
 class TagAddWidget(QWidget):
     
-    # TagAddWidget is a widget composed of a QLineEdit and a button (maybe)
+    # TagAddWidget is a widget composed of a QLineEdit and two buttons
     # which, when clicked, adds a tag to the currently selected QImage and 
-    # displayed list of tags. 
+    # displayed list of tags and allows the user to choose to save them 
+
+    # TODO: Save All Tags button
     
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
         self.setFixedSize(parent.width()*3/4, 100)
         self.setLayout(QHBoxLayout())
@@ -202,24 +189,21 @@ class TagAddWidget(QWidget):
         self.layout().addWidget(self.tagButtonAdd)
 
     def handleButton(self):
-        #print(self.tagLine.text())
         tag = self.tagLine.text()
         self.parent().addTag(tag)
 
 
 class ZoomedWidget(QWidget):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent, image=None):
+        # TODO: Case for no image
         super().__init__(parent)
-        self.selected_image_index = 0
         self.setFocusPolicy(Qt.StrongFocus)
         self.setGeometry(parent.geometry())
         layout = QHBoxLayout()
         self.setLayout(layout)
-        #self.pixmaps = parent.pixmaps
-        self.images = parent.images
         self.setMaximumHeight(parent.height())
-        self.setImage(self.images[0])
+        self.setImage(image)
 
     def setImage(self, image):
         # TODO: Use replaceWidget()?
@@ -230,14 +214,3 @@ class ZoomedWidget(QWidget):
         # Have to add the image to the widget's layout, not just the widget
         self.layout().addWidget(zoomed_image)
         self.layout().itemAt(0).widget().activate()
-
-    def currentImage(self):
-        return self.layout().itemAt(0).widget()
-
-    def setSelectedImageIndex(self, index):
-        self.selected_image_index = index
-
-    def selectNextImage(self):
-        self.setImage(self.images[self.selected_image_index])
-    def selectPreviousImage(self):
-        self.setImage(self.images[self.selected_image_index])
