@@ -138,3 +138,10 @@ class Image_Browser(QStackedWidget):
         self.setSelectedImageIndex(self.selected_image_index - self.max_thumbnails)
         self.thumbnail_widget.loadThumbnails()
         self.tag_widget.update()
+
+    def addTag(self, tag):
+        self.currentImage().addTag(tag)
+
+    def saveAllTags(self):
+        for image in self.images:
+            image.saveTags()

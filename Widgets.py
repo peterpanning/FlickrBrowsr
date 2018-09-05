@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy, QVBoxLayout, QLineEdit, QLabel, QPushButton
+from PyQt5.QtWidgets import QHBoxLayout, QGridLayout, QWidget, QSizePolicy, QVBoxLayout, QLineEdit, QLabel, QPushButton, QSpacerItem
 from PyQt5.QtCore import *
 from Image import Image, Thumbnail, ZoomedImage
 
@@ -7,9 +7,7 @@ class ThumbnailWidget(QWidget):
 
     # TODO: Should have a list of Images in order to more easily manipulate them
 
-    def __init__(self, parent):
-        # TODO: Split init function into multiple functions
-        # TODO: List of images as initialization parameter? 
+    def __init__(self, parent): 
         super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setGeometry(parent.geometry())
@@ -26,7 +24,6 @@ class ThumbnailWidget(QWidget):
         thumbnail_container.setMaximumHeight(parent.height()/3)
         thumbnail_container.setMaximumWidth(parent.width())
         
-        # TODO: Set this with a global variable/read from file?
         # Setting this as a layout property makes it easier to access in the Image class
         thumbnail_container.layout().setProperty("max_thumbnails", parent.max_thumbnails)
 
@@ -38,7 +35,6 @@ class ThumbnailWidget(QWidget):
         self.currentImage().activate()
 
     def currentImage(self):
-        # TODO: Change this to return the selected thumbnail
         # itemAt() returns a LayoutItem, widget() returns the widget that item manages
         return self.thumbnail_layout().itemAt(self.selected_thumbnail).widget()
 
@@ -86,50 +82,44 @@ class ThumbnailWidget(QWidget):
         self.currentImage().activate()
 
 class TagListWidget(QWidget):
+
     # TagLists are widgets which display all of the tags a user has added to an Image. 
-    def __init__(self, parent, tags=None):
+
+    def __init__(self, parent, tags):
         
         # Parent is a QWidget, tags is a list of strings 
-
-        # TODO: Has a weird bug when adding and saving a tag, which is pretty important
 
         super().__init__(parent)
         self.setFixedWidth(parent.width()/8)
         # TODO: Alignment
 
+        ####### LAYOUT INITIALIZATION #######
+
         # Widget needs a layout to be able to contain tags
         self.setLayout(QVBoxLayout())
         # Need a container to restrict the size of the tag layout (layouts don't have width)
         tag_container = QWidget(self)
-        if parent:
-            tag_container.setFixedWidth(parent.width()/4)
-        else:
-            tag_container.setFixedWidth(200)
+        tag_container.setFixedWidth(parent.width()/8)
         # Need to be able to access the layout later to manipulate tags
         self.tag_layout = QVBoxLayout()
+        self.tag_layout.setAlignment(Qt.AlignTop)
         tag_container.setLayout(self.tag_layout)
 
-        # Save tags to be able to more easily read them later
-        self.tags = tags
-
-        # Add them to widget as labels
-        # TODO: Make this a function
-        for tag in self.tags:
+        # Add tags to widget as qlabels
+        for tag in tags:
             t = QLabel(tag, self)
             self.tag_layout.addWidget(t)
         self.layout().addWidget(tag_container)
 
-    def setTags(self, new_tags=None):
+    def updateTags(self, new_tags=None):
         while self.tag_layout.itemAt(0):
             tag = self.tag_layout.takeAt(0).widget()
             tag.deleteLater()
-        self.tags = new_tags
-        for tag in self.tags:
+        for tag in new_tags:
             t = QLabel(tag, self)
             self.tag_layout.addWidget(t)
     
     def addTag(self, tag):
-        self.tags.append(tag)
         t = QLabel(tag, self)
         self.tag_layout.addWidget(t)
 
@@ -145,17 +135,14 @@ class TagView(QWidget):
         image = parent.currentImage()
         self.zoomed = ZoomedWidget(self, image)
         self.layout().addWidget(self.zoomed, 0, 0)
-        tags = ""
-        try:
-            tags = image.readTags()
-        except AttributeError as e:
-            print(e)
+        tags = image.readTags()
         self.tlw = TagListWidget(self, tags) 
         self.layout().addWidget(self.tlw, 0, 3)
         taw = TagAddWidget(self)
         self.layout().addWidget(taw, 1, 0)
 
     def addTag(self, tag):
+        self.parent().addTag(tag)
         self.tlw.addTag(tag)
 
     def setImage(self, image):
@@ -167,11 +154,10 @@ class TagView(QWidget):
 
     def updateTags(self):
         new_tags = self.parent().currentImage().readTags()
-        self.tlw.setTags(new_tags)
+        self.tlw.updateTags(new_tags)
     
     def saveAllTags(self):
-        tags = self.tlw.tags
-        self.parent().currentImage().saveAllTags(tags)
+        self.parent().saveAllTags()
         
 
 class TagAddWidget(QWidget):
@@ -179,8 +165,6 @@ class TagAddWidget(QWidget):
     # TagAddWidget is a widget composed of a QLineEdit and two buttons
     # which, when clicked, adds a tag to the currently selected QImage and 
     # displayed list of tags and allows the user to choose to save them 
-
-    # TODO: Lose focus after tag is added/tags are saved
     
     def __init__(self, parent):
         super().__init__(parent)
@@ -191,9 +175,11 @@ class TagAddWidget(QWidget):
         self.tagLine.setPlaceholderText("Add a tag to this image")
 
         self.tagButtonAdd = QPushButton("Add Tag", self)
+        self.tagButtonAdd.setFocusPolicy(Qt.NoFocus)
         self.tagButtonAdd.clicked.connect(self.handleButtonAdd)
 
         self.tagButtonSave = QPushButton("Save All Tags", self)
+        self.tagButtonSave.setFocusPolicy(Qt.NoFocus)
         self.tagButtonSave.clicked.connect(self.handleButtonSave)
 
         self.layout().addWidget(self.tagLine)
@@ -203,6 +189,7 @@ class TagAddWidget(QWidget):
     def handleButtonAdd(self):
         tag = self.tagLine.text()
         self.parent().addTag(tag)
+        self.tagLine.clear()
 
     def handleButtonSave(self):
         self.parent().saveAllTags()

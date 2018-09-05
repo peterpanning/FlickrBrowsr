@@ -32,16 +32,18 @@ class Image(QLabel):
     def readTags(self):
         # Returns tags as a list of strings
         return self.qimage.text("PyQtBrowserTags").split(", ")
-    
-    def saveAllTags(self, tags):
-        t = ""
-        for tag in tags:
-            t = t + tag + ", "
-            self.qimage.setText("PyQtBrowserTags", t)
-        self.qimage.save(self.file_path)
 
-    def deleteTags(self):
-        pass
+    def addTag(self, tag):
+        old_tags = self.qimage.text("PyQtBrowserTags")
+        if old_tags:
+            new_tags = old_tags + ", " + tag
+            self.qimage.setText("PyQtBrowserTags", new_tags)
+        else:
+            self.qimage.setText("PyQtBrowserTags", tag)
+    
+    def saveTags(self):
+        if self.qimage.text("PyQtBrowserTags"):
+            self.qimage.save(self.file_path)
 
     def activate(self):
         active = Image.styleString.format(self.borderWidth, Image.borderColorActive)
