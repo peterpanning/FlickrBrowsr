@@ -25,28 +25,23 @@ class Image(QLabel):
         self.setAlignment(Qt.AlignCenter)
         self.borderWidth = 3
         self.deactivate()
-        #self.show()
         self.hide()
 
-    # Images can have tags as part of their metadata. Interacting with these tags occurs through CRUD operations. 
+    # Images can have tags as part of their metadata
 
     def readTags(self):
+        # Returns tags as a list of strings
         return self.qimage.text("PyQtBrowserTags").split(", ")
     
-    def updateTags(self):
-        pass
+    def saveAllTags(self, tags):
+        t = ""
+        for tag in tags:
+            t = t + tag + ", "
+            self.qimage.setText("PyQtBrowserTags", t)
+        self.qimage.save(self.file_path)
 
     def deleteTags(self):
         pass
-
-    def addTag(self, tag):
-        old_tags = self.readTags()
-        if old_tags:
-            new_tags = old_tags + ", {}".format(tag)
-            self.qimage.setText("PyQtBrowserTags", new_tags)
-        else:
-            self.qimage.setText("PyQtBrowserTags", tag)
-        self.qimage.save(self.file_path)
 
     def activate(self):
         active = Image.styleString.format(self.borderWidth, Image.borderColorActive)

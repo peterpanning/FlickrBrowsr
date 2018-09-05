@@ -85,6 +85,20 @@ class Image_Browser(QStackedWidget):
             if self.currentWidget() == self.tag_widget:
                 self.zoomOut()
 
+        elif key == Qt.Key_Comma:
+            if self.currentWidget() == self.thumbnail_widget:
+                self.selectPreviousPage()
+            else:
+                pass
+                # Play error sound
+        
+        elif key == Qt. Key_Period:
+            if self.currentWidget() == self.thumbnail_widget:
+                self.selectNextPage()
+            else:
+                pass
+                # Play error sound
+
         
     def zoomOut(self):
         self.setCurrentWidget(self.thumbnail_widget)
@@ -113,3 +127,9 @@ class Image_Browser(QStackedWidget):
         self.setSelectedImageIndex(self.selected_image_index - 1)
         self.thumbnail_widget.selectPreviousImage()
         self.tag_widget.update()
+
+    def selectNextPage(self):
+        pass
+    
+    def selectPreviousPage(self):
+        pass

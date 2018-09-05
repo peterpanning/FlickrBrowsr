@@ -5,13 +5,11 @@ from Image import Image, Thumbnail, ZoomedImage
 
 class ThumbnailWidget(QWidget):
 
-    # Activate sets the stylesheet for the Image, and is not related to the Qt activate() function
-    # TODO: Command to set stylesheet which doesn't overlap with existing Qt function names
-
     # TODO: Should have a list of Images in order to more easily manipulate them
 
     def __init__(self, parent):
         # TODO: Split init function into multiple functions
+        # TODO: List of images as initialization parameter? 
         super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setGeometry(parent.geometry())
@@ -34,7 +32,6 @@ class ThumbnailWidget(QWidget):
         self.setLayout(main_layout)
 
         for i in range(0, thumbnail_container.layout().property("max_thumbnails")):
-            # TODO: List of images as initialization parameter? 
             self.addImage(self.images[i])
 
         self.currentImage().activate()
@@ -74,6 +71,7 @@ class ThumbnailWidget(QWidget):
         
     def nextPage(self):
         self.loadThumbnails() 
+    
     def previousPage(self):
         self.loadThumbnails()
 
@@ -92,18 +90,16 @@ class ThumbnailWidget(QWidget):
                 self.addImage(self.images[i - len(self.images)])
         self.currentImage().activate()
 
-    def setSelectedImageIndex(self, index):
-        self.selected_image_index = index
-
 class TagListWidget(QWidget):
     # TagLists are widgets which display all of the tags a user has added to an Image. 
     def __init__(self, parent, tags=None):
         
-        # Parent is a QWidget
-        # tags is a list of strings which describe an associated image. 
+        # Parent is a QWidget, tags is a list of strings 
+
+        # TODO: Has a weird bug when adding and saving a tag, which is pretty important
 
         super().__init__(parent)
-        self.setFixedWidth(parent.width()/4)
+        self.setFixedWidth(parent.width()/8)
         # TODO: Alignment
 
         # Widget needs a layout to be able to contain tags
@@ -117,22 +113,36 @@ class TagListWidget(QWidget):
         # Need to be able to access the layout later to manipulate tags
         self.tag_layout = QVBoxLayout()
         tag_container.setLayout(self.tag_layout)
-        for tag in tags:
+
+        # Save tags to be able to more easily read them later
+        self.tags = tags
+
+        # Add them to widget as labels
+        # TODO: Make this a function
+        for tag in self.tags:
             t = QLabel(tag, self)
             self.tag_layout.addWidget(t)
         self.layout().addWidget(tag_container)
 
     def setTags(self, new_tags=None):
-        tag = self.tag_layout.takeAt(0).widget()
-        tag.deleteLater()
-        for tag in new_tags:
+        while self.tag_layout.itemAt(0):
+            tag = self.tag_layout.takeAt(0).widget()
+            tag.deleteLater()
+        self.tags = new_tags
+        for tag in self.tags:
             t = QLabel(tag, self)
             self.tag_layout.addWidget(t)
+    
+    def addTag(self, tag):
+        self.tags.append(tag)
+        t = QLabel(tag, self)
+        self.tag_layout.addWidget(t)
 
 
 class TagView(QWidget):
     # TagView is the full-window widget which contains a zoomed image, its tags, and the option
     # to add new tags to that image. 
+
     def __init__(self, parent):
         super().__init__(parent)
         self.setGeometry(parent.geometry())
@@ -151,8 +161,7 @@ class TagView(QWidget):
         self.layout().addWidget(taw, 1, 0)
 
     def addTag(self, tag):
-        self.parent().currentImage().addTag(tag)
-        self.updateTags()
+        self.tlw.addTag(tag)
 
     def setImage(self, image):
         self.zoomed.setImage(image)
@@ -164,6 +173,10 @@ class TagView(QWidget):
     def updateTags(self):
         new_tags = self.parent().currentImage().readTags()
         self.tlw.setTags(new_tags)
+    
+    def saveAllTags(self):
+        tags = self.tlw.tags
+        self.parent().currentImage().saveAllTags(tags)
         
 
 class TagAddWidget(QWidget):
@@ -172,7 +185,7 @@ class TagAddWidget(QWidget):
     # which, when clicked, adds a tag to the currently selected QImage and 
     # displayed list of tags and allows the user to choose to save them 
 
-    # TODO: Save All Tags button
+    # TODO: Lose focus after tag is added/tags are saved
     
     def __init__(self, parent):
         super().__init__(parent)
@@ -183,14 +196,21 @@ class TagAddWidget(QWidget):
         self.tagLine.setPlaceholderText("Add a tag to this image")
 
         self.tagButtonAdd = QPushButton("Add Tag", self)
-        self.tagButtonAdd.clicked.connect(self.handleButton)
+        self.tagButtonAdd.clicked.connect(self.handleButtonAdd)
+
+        self.tagButtonSave = QPushButton("Save All Tags", self)
+        self.tagButtonSave.clicked.connect(self.handleButtonSave)
 
         self.layout().addWidget(self.tagLine)
         self.layout().addWidget(self.tagButtonAdd)
+        self.layout().addWidget(self.tagButtonSave)
 
-    def handleButton(self):
+    def handleButtonAdd(self):
         tag = self.tagLine.text()
         self.parent().addTag(tag)
+
+    def handleButtonSave(self):
+        self.parent().saveAllTags()
 
 
 class ZoomedWidget(QWidget):
@@ -202,7 +222,7 @@ class ZoomedWidget(QWidget):
         self.setGeometry(parent.geometry())
         layout = QHBoxLayout()
         self.setLayout(layout)
-        self.setMaximumHeight(parent.height())
+        self.setFixedSize(parent.width()*3/4, parent.height())
         self.setImage(image)
 
     def setImage(self, image):
