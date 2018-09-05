@@ -54,6 +54,7 @@ class Image_Browser(QStackedWidget):
         p.setColor(self.backgroundRole(), Qt.gray)
         self.setPalette(p)
         self.setMaximumSize(1920, 1080)
+        self.max_thumbnails = 5
 
         self.thumbnail_widget = ThumbnailWidget(self)
         self.tag_widget = TagView(self)
@@ -85,14 +86,14 @@ class Image_Browser(QStackedWidget):
             if self.currentWidget() == self.tag_widget:
                 self.zoomOut()
 
-        elif key == Qt.Key_Comma:
+        elif key == Qt.Key_Comma or key == Qt.Key_PageUp:
             if self.currentWidget() == self.thumbnail_widget:
                 self.selectPreviousPage()
             else:
                 pass
                 # Play error sound
         
-        elif key == Qt. Key_Period:
+        elif key == Qt. Key_Period or key == Qt.Key_PageDown:
             if self.currentWidget() == self.thumbnail_widget:
                 self.selectNextPage()
             else:
@@ -129,7 +130,11 @@ class Image_Browser(QStackedWidget):
         self.tag_widget.update()
 
     def selectNextPage(self):
-        pass
+        self.setSelectedImageIndex(self.selected_image_index + self.max_thumbnails)
+        self.thumbnail_widget.loadThumbnails()
+        self.tag_widget.update()
     
     def selectPreviousPage(self):
-        pass
+        self.setSelectedImageIndex(self.selected_image_index - self.max_thumbnails)
+        self.thumbnail_widget.loadThumbnails()
+        self.tag_widget.update()
