@@ -1,6 +1,7 @@
 import os
 from Image import *
 from Widgets import *
+from Flickr import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
@@ -39,6 +40,8 @@ class Image_Browser(QStackedWidget):
             full_path = data_folder + "/" + file_name
             image = Image(self, full_path)
             self.images.append(image)
+        
+        flickr = Flickr()
 
     ### UI INITIALIZATION ###
 

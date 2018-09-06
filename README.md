@@ -1,7 +1,9 @@
 A simple image browser built using PyQt5, a set of Python bindings for v5 of the Qt application framework from The Qt Company.
 
-Uses Python3 and the PyQt5 library. 
+Uses Python3, the PyQt5 library, and the [flickrapi](https://stuvel.eu/flickrapi-doc/1-intro.html) python module, which requires Requests and Six. 
 
-Install PyQt5 using `pip3 install pyqt5`.
+Secrets are encrypted with [git secret](http://git-secret.io/installation). 
+
+Install PyQt5 and the flickrapi using pip3, as in `pip install [package]`.
 
 If necessary, install pip3 as appropriate for your package manager. 
