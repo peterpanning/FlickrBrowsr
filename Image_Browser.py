@@ -1,6 +1,7 @@
 import os
 from Image import *
-from Widgets import *
+from TagWidgets import *
+from SearchWidgets import *
 from Flickr import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
@@ -59,7 +60,7 @@ class Image_Browser(QStackedWidget):
         self.setMaximumSize(1920, 1080)
         self.max_thumbnails = 5
 
-        self.thumbnail_widget = ThumbnailWidget(self)
+        self.thumbnail_widget = SearchView(self)
         self.tag_widget = TagView(self)
 
         self.addWidget(self.thumbnail_widget)
