@@ -2,7 +2,7 @@ import os
 from Image import *
 from TagWidgets import *
 from SearchWidgets import *
-from Flickr import *
+from FlickrEngine import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
@@ -42,7 +42,7 @@ class Image_Browser(QStackedWidget):
             image = Image(self, full_path)
             self.images.append(image)
         
-        flickr = Flickr()
+        self.flickr = FlickrEngine()
 
     ### UI INITIALIZATION ###
 
@@ -149,3 +149,9 @@ class Image_Browser(QStackedWidget):
     def saveAllTags(self):
         for image in self.images:
             image.saveTags()
+
+    def search(self, terms, max_results):
+        results = self.flickr.search(terms, max_results)
+        for url in results:
+            img = Image(url) 
+            self.images.append(img)

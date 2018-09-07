@@ -22,7 +22,6 @@ class TagView(QWidget):
         taw = TagAddWidget(self)
         self.layout().addWidget(taw, 1, 0)
 
-
     def addTag(self, tag):
         self.parent().addTag(tag)
         self.tlw.addTag(tag)

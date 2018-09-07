@@ -103,6 +103,11 @@ class SearchView(QWidget):
                 self.loadThumbnail(self.parent().images[i - len(self.parent().images)])
         self.currentImage().activate()
 
+    def search(self, terms, max_results):
+        # Terms is a string which the user would like to use to search Flickr
+        self.parent().search(terms, max_results)
+        self.loadThumbnails()
+
 class SearchPanel(QWidget):
 
     def __init__(self, parent):
@@ -115,26 +120,31 @@ class SearchPanel(QWidget):
         self.setFixedSize(parent.width(), parent.height()/4)
         self.setLayout(QVBoxLayout())
 
-        # Panel Components
+        ####### SEARCH FIELD #######
 
-        searchField = QLineEdit()
-        searchField.setPlaceholderText("Search for images")
-        searchField.setFixedWidth(parent.width()/3)
-        searchButton = MyButton("Search", self)
-        exitButton = MyButton("Exit", self)
-        maxResultsLabel = QLabel("Max Results: ", self)
-        maxResultsLabel.setFixedWidth(80)
+        self.searchField = QLineEdit()
+        self.searchField.setPlaceholderText("Search for images")
+        self.searchField.setFixedWidth(parent.width()/3)
 
-        # Combo Box Initialization 
+        ####### SEARCH BUTTON #######
 
-        maxResultsBox = QComboBox()
-        maxResultsBox.setFixedWidth(50)
+        self.searchButton = MyButton("Search", self)
+        self.searchButton.clicked.connect(self.search)
+
+        self.exitButton = MyButton("Exit", self)
+        self.maxResultsLabel = QLabel("Max Results: ", self)
+        self.maxResultsLabel.setFixedWidth(80)
+
+        ####### COMBO BOX ####### 
+
+        self.maxResultsBox = QComboBox()
+        self.maxResultsBox.setFixedWidth(50)
         for i in range(1, 11):
-            maxResultsBox.addItem('{}'.format(i))
-        maxResultsBox.addItem('20')
-        maxResultsBox.addItem('50')
+            self.maxResultsBox.addItem('{}'.format(i))
+        self.maxResultsBox.addItem('20')
+        self.maxResultsBox.addItem('50')
 
-        # Add Widgets to layout
+        ####### ADDING WIDGETS #######
 
         # Buttons below the thumbnails their own layout
         self.layout().addLayout(QHBoxLayout())
@@ -142,13 +152,18 @@ class SearchPanel(QWidget):
 
         # Followed by the SearchField widgets
 
-        self.layout().itemAt(0).addWidget(searchField)
-        self.layout().itemAt(0).addWidget(searchButton)
+        self.layout().itemAt(0).addWidget(self.searchField)
+        self.layout().itemAt(0).addWidget(self.searchButton)
 
         # So do Max Results widgets
 
-        self.layout().itemAt(0).addWidget(maxResultsLabel)
-        self.layout().itemAt(0).addWidget(maxResultsBox)
+        self.layout().itemAt(0).addWidget(self.maxResultsLabel)
+        self.layout().itemAt(0).addWidget(self.maxResultsBox)
 
-        self.layout().addWidget(exitButton)
+        self.layout().addWidget(self.exitButton)
         self.layout().itemAt(1).setAlignment(Qt.AlignHCenter)
+
+    def search(self):
+        terms = self.searchField.text()
+        max_results = int(self.maxResultsBox.currentText())
+        self.parent().search(terms, max_results)
