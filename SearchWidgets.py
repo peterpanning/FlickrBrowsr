@@ -25,8 +25,8 @@ class SearchView(QWidget):
         thumbnail_container = QWidget(self)
         thumbnail_container.setLayout(QHBoxLayout())
         thumbnail_container.setGeometry(0, parent.height()/3, parent.width(), parent.height()/3)
-        thumbnail_container.setMaximumHeight(parent.height()/3)
-        thumbnail_container.setMaximumWidth(parent.width())
+        thumbnail_container.setFixedHeight(parent.height()/3)
+        thumbnail_container.setFixedWidth(parent.width())
         
         # Setting this as a layout property makes it easier to access in the Image class
         thumbnail_container.layout().setProperty("max_thumbnails", parent.max_thumbnails)

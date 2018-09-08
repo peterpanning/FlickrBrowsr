@@ -15,12 +15,30 @@ class Image(QLabel):
     borderColorInactive = "grey"
     styleString = "border: {}px solid {}"
 
-    def __init__(self, parent=None, image_file_path=None):
+    def __init__(self, parent=None, image_file_path=None, image_data=None):
+
+        # QImages and QPixmaps can both be loaded from data, which we can 
+        # get from an HTTP response. We can generate an image_file_path from 
+        # the Flickr API response. The action to take here will then depend on 
+        # the value of the image_data variable. 
+
+        # Loosely: If there is image data, QImage and QPixmap should be loaded from 
+        # that data, and file path should be generated from the Flickr ID 
+        
         
         super().__init__(parent)
+
         self.file_path = image_file_path
-        self.qimage = QImage(self.file_path)
-        self.setPixmap(QPixmap(self.file_path))
+        
+        if image_data == None:
+            self.qimage = QImage(self.file_path)
+            self.setPixmap(QPixmap(self.file_path))
+        else:
+            self.qimage = QImage()
+            self.qimage.loadFromData(image_data)
+            self.pixmap = QPixmap()
+            self.pixmap.loadFromData(image_data)
+
         self.setFocusPolicy(Qt.NoFocus)
         self.setAlignment(Qt.AlignCenter)
         self.borderWidth = 3

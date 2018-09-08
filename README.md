@@ -2,7 +2,7 @@ A simple image browser built using PyQt5, a set of Python bindings for v5 of the
 
 Uses Python3, the PyQt5 library, and the [flickrapi](https://stuvel.eu/flickrapi-doc/1-intro.html) python module, which requires Requests and Six. 
 
-Secrets are encrypted with [git secret](http://git-secret.io/installation). 
+May need pyopenssl to connect to flickr, use `pip install pyopenssl`. 
 
 Install PyQt5 and the flickrapi using pip3, as in `pip install [package]`.
 
