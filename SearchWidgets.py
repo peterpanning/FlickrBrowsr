@@ -106,7 +106,6 @@ class SearchView(QWidget):
     def search(self, terms, max_results):
         # Terms is a string which the user would like to use to search Flickr
         self.parent().search(terms, max_results)
-        self.loadThumbnails()
 
 class SearchPanel(QWidget):
 

@@ -5,7 +5,6 @@ from SearchWidgets import *
 import flickrapi
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 import xml.etree.ElementTree as ET
-from OpenSSL import SSL
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
@@ -162,36 +161,37 @@ class Image_Browser(QStackedWidget):
             image.saveTags()
 
     def search(self, terms, max_results):
-        # Results is a dict of generated file names to their byte data
+
+        # TODO: Replace _ with %20
 
         print("Starting Search")
-        xml = self.flickr.photos.search(tags=terms, per_page=max)
+        xml = self.flickr.photos.search(tags=terms, per_page=max_results)
         print("Returned from Flickr API")
+
         url = "https://farm{}.staticflickr.com/{}/{}_{}.jpg"
         farm_id = ""
         server_id = ""
         photo_id = ""
         secret = ""
-        results = {}
 
         for photo in xml.iter('photo'):
-            farm_id = str(photo.get('farm'))
+            # TODO: Returns multiple copies of the same image. 
+            # Maybe it's not iterating across photos correctly?
+            farm_id = photo.get('farm')
             server_id = photo.get('server')
             photo_id = photo.get('id')
             secret = photo.get('secret')
             url = url.format(farm_id, server_id, photo_id, secret)
-            qurl = QUrl(url)
             print("Starting Network Request")
-            request = QNetworkRequest(qurl)
-            response = self.netman.get(request)
+            request = QNetworkRequest(QUrl(url))
+            self.netman.get(request)
 
     def requestFinished(self, reply):
         print("Network Request Finished")
         er = reply.error()
         if er == QNetworkReply.NoError:
-            # TODO: Get id info from reply's requst method? 
-            request_url = reply.request().url() # => https://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
-            
+            # TODO: Separate function to parse reply
+            request_url = reply.request().url().toString() # => https://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
             # Farm id is between "farm" and .
             request_url = request_url.split('farm')[1] # => {farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
             farm_id = request_url[0:request_url.find('.')]
@@ -199,12 +199,20 @@ class Image_Browser(QStackedWidget):
             request_url = request_url[request_url.find('/'):] # => /{server-id}/{id}_{secret}.jpg
             server_id = request_url.split('/')[1]
             # Photo id is then between / and _
-            request_url = request_url[request_url.find('/'):] # => /{id}_{secret}.jpg
+            # Trim leading / => {server-id}/{id}_{secret}.jpg
+            request_url = request_url[1:]
+            # Select after next /
+            request_url = request_url.split('/')[1] # => {id}_{secret}.jpg
             photo_id = request_url[:request_url.find('_')]
             # Secret is then between _ and .
-            secret = request_url[request_url.find('_'):request_url.find('.')]
+            secret = request_url[request_url.find('_'):request_url.find('.')][1:]
 
             file_name = "data/flickr_image_" + farm_id + server_id + photo_id + secret
-            bytes = reply.readAll()
+            img_data = reply.readAll()
+            img = Image(self, file_name, img_data)
+
+            self.images.insert(self.selected_image_index, img)
+            self.thumbnail_widget.loadThumbnails()
+            self.tag_widget.update()
         else:
             print("HTTP Error {}".format(er))

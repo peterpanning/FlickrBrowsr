@@ -28,16 +28,19 @@ class Image(QLabel):
         
         super().__init__(parent)
 
-        self.file_path = image_file_path
+        if image_file_path:
+            self.file_path = image_file_path
         
         if image_data == None:
-            self.qimage = QImage(self.file_path)
-            self.setPixmap(QPixmap(self.file_path))
+            if image_file_path:
+                self.qimage = QImage(self.file_path)
+                self.setPixmap(QPixmap(self.file_path))
         else:
             self.qimage = QImage()
             self.qimage.loadFromData(image_data)
-            self.pixmap = QPixmap()
-            self.pixmap.loadFromData(image_data)
+            pixmap = QPixmap()
+            pixmap.loadFromData(image_data)
+            self.setPixmap(pixmap)
 
         self.setFocusPolicy(Qt.NoFocus)
         self.setAlignment(Qt.AlignCenter)
@@ -77,8 +80,14 @@ class Thumbnail(Image):
         # Weird thing: Because we're initializing Images with file paths,
         # We now need to get that path from any Image we pass in to create
         # subclasses. We could fix this by checking Image's class
+
+        # TODO: Call super constructor w/o file path info, copy image data 
+        # i.e. qimage/qpixmap etc
         
-        super().__init__(parent, image.file_path)
+        super().__init__(parent)
+        self.file_path = image.file_path
+        self.qimage = image.qimage
+        self.setPixmap(image.pixmap())
         self.resizeToParent()
         self.show()
 
@@ -113,7 +122,10 @@ class Thumbnail(Image):
         
 class ZoomedImage(Image):
     def __init__(self, parent, image):
-        super().__init__(parent, image.file_path) 
+        super().__init__(parent) 
+        self.file_path = image.file_path
+        self.qimage = image.qimage
+        self.setPixmap(image.pixmap())
         self.borderWidth = 10
         self.resizeToParent()
         self.show()
