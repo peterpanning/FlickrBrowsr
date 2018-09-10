@@ -22,6 +22,7 @@ class SearchView(QWidget):
 
         # Create a container for the thumbnail images to constrain the height 
         # of the layout
+        
         thumbnail_container = QWidget(self)
         thumbnail_container.setLayout(QHBoxLayout())
         thumbnail_container.setGeometry(0, parent.height()/3, parent.width(), parent.height()/3)
@@ -42,11 +43,9 @@ class SearchView(QWidget):
 
         ####### SAVE/DELETE BUTTONS #######
 
-        saveButton = MyButton("Save", self)
-        deleteButton = MyButton("Delete", self)
         self.layout().addLayout(QHBoxLayout())
-        self.layout().itemAt(1).setAlignment(Qt.AlignCenter)
-        self.layout().itemAt(1).addWidget(saveButton)
+        deleteButton = MyButton("Delete", self)
+        deleteButton.clicked.connect(self.handleDelete)
         self.layout().itemAt(1).addWidget(deleteButton)
 
         self.layout().addItem(QSpacerItem(self.width(), 50))
@@ -104,8 +103,13 @@ class SearchView(QWidget):
         self.currentImage().activate()
 
     def search(self, terms, max_results):
-        # Terms is a string which the user would like to use to search Flickr
         self.parent().search(terms, max_results)
+
+    def handleDelete(self):
+        self.parent().handleDelete()
+
+    def handleSave(self):
+        self.parent().handleSave()
 
 class SearchPanel(QWidget):
 
@@ -119,22 +123,24 @@ class SearchPanel(QWidget):
         self.setFixedSize(parent.width(), parent.height()/4)
         self.setLayout(QVBoxLayout())
 
-        ####### SEARCH FIELD #######
+        ####### SEARCH FIELD INIT #######
 
         self.searchField = QLineEdit()
         self.searchField.setPlaceholderText("Search for images")
         self.searchField.setFixedWidth(parent.width()/3)
 
-        ####### SEARCH BUTTON #######
+        ####### SEARCH BUTTONS INIT #######
 
         self.searchButton = MyButton("Search", self)
         self.searchButton.clicked.connect(self.search)
-
+        self.saveButton = MyButton("Save", self)
+        self.saveButton.clicked.connect(self.handleSave)
         self.exitButton = MyButton("Exit", self)
+        self.exitButton.clicked.connect(self.handleExit)
         self.maxResultsLabel = QLabel("Max Results: ", self)
         self.maxResultsLabel.setFixedWidth(80)
 
-        ####### COMBO BOX ####### 
+        ####### COMBO BOX INIT ####### 
 
         self.maxResultsBox = QComboBox()
         self.maxResultsBox.setFixedWidth(50)
@@ -145,24 +151,31 @@ class SearchPanel(QWidget):
 
         ####### ADDING WIDGETS #######
 
-        # Buttons below the thumbnails their own layout
+        # Search and maxResults are in the same layout
         self.layout().addLayout(QHBoxLayout())
         self.layout().itemAt(0).setAlignment(Qt.AlignHCenter)
-
-        # Followed by the SearchField widgets
 
         self.layout().itemAt(0).addWidget(self.searchField)
         self.layout().itemAt(0).addWidget(self.searchButton)
 
-        # So do Max Results widgets
-
         self.layout().itemAt(0).addWidget(self.maxResultsLabel)
         self.layout().itemAt(0).addWidget(self.maxResultsBox)
 
-        self.layout().addWidget(self.exitButton)
-        self.layout().itemAt(1).setAlignment(Qt.AlignHCenter)
+        # Save and Exit get another layout
+
+        self.layout().addLayout(QHBoxLayout())
+        self.layout().itemAt(1).setAlignment(Qt.AlignCenter)
+
+        self.layout().itemAt(1).addWidget(self.saveButton)
+        self.layout().itemAt(1).addWidget(self.exitButton)
 
     def search(self):
         terms = self.searchField.text()
         max_results = int(self.maxResultsBox.currentText())
         self.parent().search(terms, max_results)
+
+    def handleExit(self):
+        exit()
+
+    def handleSave(self):
+        self.parent().handleSave()

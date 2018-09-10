@@ -1,6 +1,7 @@
 from PyQt5.QtGui import QPixmap, QImage
 from PyQt5.QtWidgets import QLabel, QWidget, QSizePolicy
 from PyQt5.QtCore import *
+import os
 
 # TODO: Is our Image class a QLabel which has a QImage, pixmap, and file path, 
 # or a QWidget which has a QImage, QPixmap, and file path? How easy would this
@@ -16,15 +17,6 @@ class Image(QLabel):
     styleString = "border: {}px solid {}"
 
     def __init__(self, parent=None, image_file_path=None, image_data=None):
-
-        # QImages and QPixmaps can both be loaded from data, which we can 
-        # get from an HTTP response. We can generate an image_file_path from 
-        # the Flickr API response. The action to take here will then depend on 
-        # the value of the image_data variable. 
-
-        # Loosely: If there is image data, QImage and QPixmap should be loaded from 
-        # that data, and file path should be generated from the Flickr ID 
-        
         
         super().__init__(parent)
 
@@ -50,9 +42,9 @@ class Image(QLabel):
 
     # Images can have tags as part of their metadata
 
-    def readTags(self):
-        # Returns tags as a list of strings
-        return self.qimage.text("PyQtBrowserTags").split(", ")
+    def activate(self):
+        active = Image.styleString.format(self.borderWidth, Image.borderColorActive)
+        self.setStyleSheet(active)
 
     def addTag(self, tag):
         old_tags = self.qimage.text("PyQtBrowserTags")
@@ -61,28 +53,29 @@ class Image(QLabel):
             self.qimage.setText("PyQtBrowserTags", new_tags)
         else:
             self.qimage.setText("PyQtBrowserTags", tag)
-    
-    def saveTags(self):
-        if self.qimage.text("PyQtBrowserTags"):
-            self.qimage.save(self.file_path)
-
-    def activate(self):
-        active = Image.styleString.format(self.borderWidth, Image.borderColorActive)
-        self.setStyleSheet(active)
 
     def deactivate(self):
         inactive = Image.styleString.format(self.borderWidth, Image.borderColorInactive)
         self.setStyleSheet(inactive)
 
+    def delete(self):
+        if os.path.exists(self.file_path):
+            os.remove(self.file_path)
+
+    def readTags(self):
+        # Returns tags as a list of strings
+        return self.qimage.text("PyQtBrowserTags").split(", ")
+    
+    def saveTags(self):
+        if self.qimage.text("PyQtBrowserTags"):
+            self.qimage.save(self.file_path)
+
+    def save(self):
+        self.qimage.save(self.file_path)
+
+
 class Thumbnail(Image):
     def __init__(self, parent, image):
-        
-        # Weird thing: Because we're initializing Images with file paths,
-        # We now need to get that path from any Image we pass in to create
-        # subclasses. We could fix this by checking Image's class
-
-        # TODO: Call super constructor w/o file path info, copy image data 
-        # i.e. qimage/qpixmap etc
         
         super().__init__(parent)
         self.file_path = image.file_path
@@ -92,6 +85,8 @@ class Thumbnail(Image):
         self.show()
 
     def resizeToParent(self):
+
+        # TODO: Fix bug where labels/pixmaps do not correctly resize when put in layout
                 
         parent = self.parent()
         layout = parent.layout()
@@ -109,6 +104,8 @@ class Thumbnail(Image):
         
         # The new height is much easier to calculate
         height = ( parent.height() - ( margins[1] * 2 ) - ( self.borderWidth * 2 ) )
+
+        # TODO: This scaling is the same in both classes, could be replaced by a function
 
         # Which dimension we scale to depends on which was larger in the original pixmap
 

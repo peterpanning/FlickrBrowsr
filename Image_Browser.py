@@ -133,6 +133,16 @@ class Image_Browser(QStackedWidget):
     def currentImage(self):
         return self.images[self.selected_image_index]
 
+    def handleSave(self):
+        for image in self.images:
+            image.save()
+    
+    def handleDelete(self):
+        self.images[self.selected_image_index].delete()
+        self.images.remove(self.images[self.selected_image_index])
+        self.thumbnail_widget.loadThumbnails()
+        self.tag_widget.update()
+
     def selectNextImage(self):
         self.setSelectedImageIndex(self.selected_image_index + 1)
         self.thumbnail_widget.selectNextImage()
@@ -162,32 +172,27 @@ class Image_Browser(QStackedWidget):
 
     def search(self, terms, max_results):
 
-        # TODO: Replace _ with %20
-
-        print("Starting Search")
         xml = self.flickr.photos.search(tags=terms, per_page=max_results)
-        print("Returned from Flickr API")
 
-        url = "https://farm{}.staticflickr.com/{}/{}_{}.jpg"
         farm_id = ""
         server_id = ""
         photo_id = ""
         secret = ""
 
         for photo in xml.iter('photo'):
-            # TODO: Returns multiple copies of the same image. 
-            # Maybe it's not iterating across photos correctly?
+            # URL must be declared within the loop, or it won't be 
+            # able to be formatted in subsequent iterations
+            url = "https://farm{}.staticflickr.com/{}/{}_{}.jpg"
             farm_id = photo.get('farm')
             server_id = photo.get('server')
             photo_id = photo.get('id')
             secret = photo.get('secret')
             url = url.format(farm_id, server_id, photo_id, secret)
-            print("Starting Network Request")
+            print("Image URL: {}".format(url))
             request = QNetworkRequest(QUrl(url))
             self.netman.get(request)
 
     def requestFinished(self, reply):
-        print("Network Request Finished")
         er = reply.error()
         if er == QNetworkReply.NoError:
             # TODO: Separate function to parse reply
