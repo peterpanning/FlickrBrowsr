@@ -1,10 +1,11 @@
 # Peter Mutch
 # CSc 699
 # Spring 2018
-# Project 1
 
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
+
+# TODO: More elegant handling of cases where there are few or no images
 
 import sys
 from pathlib import Path 

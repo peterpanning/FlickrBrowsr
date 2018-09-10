@@ -136,7 +136,10 @@ class Image_Browser(QStackedWidget):
             self.selected_image_index = new_index
 
     def currentImage(self):
-        return self.images[self.selected_image_index]
+        if len(self.images) > 0:
+            return self.images[self.selected_image_index]
+        else:
+            return None
 
     def handleSave(self):
         for image in self.images:
@@ -159,12 +162,14 @@ class Image_Browser(QStackedWidget):
         self.tag_widget.update()
 
     def selectNextPage(self):
-        self.setSelectedImageIndex(self.selected_image_index + self.max_thumbnails)
+        limit = min(len(self.images), self.max_thumbnails)
+        self.setSelectedImageIndex(self.selected_image_index + limit)
         self.thumbnail_widget.loadThumbnails()
         self.tag_widget.update()
     
     def selectPreviousPage(self):
-        self.setSelectedImageIndex(self.selected_image_index - self.max_thumbnails)
+        limit = min(len(self.images), self.max_thumbnails)
+        self.setSelectedImageIndex(self.selected_image_index - limit)
         self.thumbnail_widget.loadThumbnails()
         self.tag_widget.update()
 

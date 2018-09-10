@@ -9,6 +9,7 @@ class TagView(QWidget):
     def __init__(self, parent):
         super().__init__(parent)
         self.setGeometry(parent.geometry())
+        tags = []
 
         ####### LAYOUT INITIALIZATION #######
 
@@ -16,7 +17,10 @@ class TagView(QWidget):
         image = parent.currentImage()
         self.zoomed = ZoomedWidget(self, image)
         self.layout().addWidget(self.zoomed, 0, 0)
-        tags = image.readTags()
+        try:
+            tags = image.readTags()
+        except:
+            pass
         self.tlw = TagListWidget(self, tags) 
         self.layout().addWidget(self.tlw, 0, 3)
         taw = TagAddWidget(self)
@@ -30,8 +34,12 @@ class TagView(QWidget):
         self.zoomed.setImage(image)
 
     def update(self):
-        self.setImage(self.parent().currentImage())
-        self.updateTags()
+        currentImage = self.parent().currentImage()
+        if currentImage:
+            self.setImage(currentImage)
+            self.updateTags()
+        else:
+            return
 
     def updateTags(self):
         new_tags = self.parent().currentImage().readTags()
@@ -44,13 +52,12 @@ class TagListWidget(QWidget):
 
     # TagLists are widgets which display all of the tags a user has added to an Image. 
 
-    def __init__(self, parent, tags):
+    def __init__(self, parent, tags=None):
         
         # Parent is a QWidget, tags is a list of strings 
 
         super().__init__(parent)
         self.setFixedWidth(parent.width()/8)
-        # TODO: Alignment
 
         ####### LAYOUT INITIALIZATION #######
 
@@ -65,9 +72,10 @@ class TagListWidget(QWidget):
         tag_container.setLayout(self.tag_layout)
 
         # Add tags to widget as qlabels
-        for tag in tags:
-            t = QLabel(tag, self)
-            self.tag_layout.addWidget(t)
+        if tags:
+            for tag in tags:
+                t = QLabel(tag, self)
+                self.tag_layout.addWidget(t)
         self.layout().addWidget(tag_container)
 
     def updateTags(self, new_tags=None):
@@ -126,7 +134,8 @@ class ZoomedWidget(QWidget):
         layout = QHBoxLayout()
         self.setLayout(layout)
         self.setFixedSize(parent.width()*3/4, parent.height())
-        self.setImage(image)
+        if image:
+            self.setImage(image)
 
     def setImage(self, image):
         # TODO: Use replaceWidget()?
