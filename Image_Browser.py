@@ -5,6 +5,7 @@ from SearchWidgets import *
 import flickrapi
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 import xml.etree.ElementTree as ET
+from PyQt5.QtMultimedia import QSound
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
@@ -30,6 +31,8 @@ class Image_Browser(QStackedWidget):
         self.images = []
         self.netman = QNetworkAccessManager()
         self.netman.finished.connect(self.requestFinished)
+        self.clickedSound = QSound("assets/click.wav")
+        self.errorSound = QSound("assets/error.wav")
 
         self.initData()
         self.initUI()
@@ -86,9 +89,11 @@ class Image_Browser(QStackedWidget):
 
         if key == Qt.Key_Left:
             self.selectPreviousImage()
+            self.clickedSound.play()
             
         elif key == Qt.Key_Right:
             self.selectNextImage()
+            self.clickedSound.play()
 
         elif key == Qt.Key_Return:
             if self.currentWidget() == self.thumbnail_widget:
@@ -103,16 +108,16 @@ class Image_Browser(QStackedWidget):
         elif key == Qt.Key_Comma or key == Qt.Key_PageUp:
             if self.currentWidget() == self.thumbnail_widget:
                 self.selectPreviousPage()
+                self.clickedSound.play()
             else:
-                pass
-                # Play error sound
+                self.errorSound.play()
         
         elif key == Qt. Key_Period or key == Qt.Key_PageDown:
             if self.currentWidget() == self.thumbnail_widget:
                 self.selectNextPage()
+                self.clickedSound.play()
             else:
-                pass
-                # Play error sound
+                self.errorSound.play()
 
         
     def zoomOut(self):
