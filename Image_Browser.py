@@ -1,6 +1,10 @@
 import os
 from Image import *
-from Widgets import *
+from TagWidgets import *
+from SearchWidgets import *
+import flickrapi
+from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+import xml.etree.ElementTree as ET
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import QWidget, QLabel, QHBoxLayout, QGridLayout, QStackedWidget, QSizePolicy
@@ -24,6 +28,8 @@ class Image_Browser(QStackedWidget):
 
         self.selected_image_index = 0
         self.images = []
+        self.netman = QNetworkAccessManager()
+        self.netman.finished.connect(self.requestFinished)
 
         self.initData()
         self.initUI()
@@ -40,6 +46,14 @@ class Image_Browser(QStackedWidget):
             image = Image(self, full_path)
             self.images.append(image)
 
+        xml = ET.parse('secrets.xml')
+        # TODO: Read these secrets using keywords or something similar
+        root = xml.getroot()
+        api_key = root[0][0].text
+        api_secret = root[0][1].text
+
+        self.flickr = flickrapi.FlickrAPI(api_key, api_secret)
+        
     ### UI INITIALIZATION ###
 
     def initUI(self, x=300, y=300, width=800, height=600):
@@ -56,7 +70,7 @@ class Image_Browser(QStackedWidget):
         self.setMaximumSize(1920, 1080)
         self.max_thumbnails = 5
 
-        self.thumbnail_widget = ThumbnailWidget(self)
+        self.thumbnail_widget = SearchView(self)
         self.tag_widget = TagView(self)
 
         self.addWidget(self.thumbnail_widget)
@@ -119,6 +133,16 @@ class Image_Browser(QStackedWidget):
     def currentImage(self):
         return self.images[self.selected_image_index]
 
+    def handleSave(self):
+        for image in self.images:
+            image.save()
+    
+    def handleDelete(self):
+        self.images[self.selected_image_index].delete()
+        self.images.remove(self.images[self.selected_image_index])
+        self.thumbnail_widget.loadThumbnails()
+        self.tag_widget.update()
+
     def selectNextImage(self):
         self.setSelectedImageIndex(self.selected_image_index + 1)
         self.thumbnail_widget.selectNextImage()
@@ -145,3 +169,55 @@ class Image_Browser(QStackedWidget):
     def saveAllTags(self):
         for image in self.images:
             image.saveTags()
+
+    def search(self, terms, max_results):
+
+        xml = self.flickr.photos.search(tags=terms, per_page=max_results)
+
+        farm_id = ""
+        server_id = ""
+        photo_id = ""
+        secret = ""
+
+        for photo in xml.iter('photo'):
+            # URL must be declared within the loop, or it won't be 
+            # able to be formatted in subsequent iterations
+            url = "https://farm{}.staticflickr.com/{}/{}_{}.jpg"
+            farm_id = photo.get('farm')
+            server_id = photo.get('server')
+            photo_id = photo.get('id')
+            secret = photo.get('secret')
+            url = url.format(farm_id, server_id, photo_id, secret)
+            print("Image URL: {}".format(url))
+            request = QNetworkRequest(QUrl(url))
+            self.netman.get(request)
+
+    def requestFinished(self, reply):
+        er = reply.error()
+        if er == QNetworkReply.NoError:
+            # TODO: Separate function to parse reply
+            request_url = reply.request().url().toString() # => https://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
+            # Farm id is between "farm" and .
+            request_url = request_url.split('farm')[1] # => {farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
+            farm_id = request_url[0:request_url.find('.')]
+            # Server id is then between / and /
+            request_url = request_url[request_url.find('/'):] # => /{server-id}/{id}_{secret}.jpg
+            server_id = request_url.split('/')[1]
+            # Photo id is then between / and _
+            # Trim leading / => {server-id}/{id}_{secret}.jpg
+            request_url = request_url[1:]
+            # Select after next /
+            request_url = request_url.split('/')[1] # => {id}_{secret}.jpg
+            photo_id = request_url[:request_url.find('_')]
+            # Secret is then between _ and .
+            secret = request_url[request_url.find('_'):request_url.find('.')][1:]
+
+            file_name = "data/flickr_image_" + farm_id + server_id + photo_id + secret
+            img_data = reply.readAll()
+            img = Image(self, file_name, img_data)
+
+            self.images.insert(self.selected_image_index, img)
+            self.thumbnail_widget.loadThumbnails()
+            self.tag_widget.update()
+        else:
+            print("HTTP Error {}".format(er))
