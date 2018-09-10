@@ -68,7 +68,11 @@ class Image(QLabel):
     
     def saveTags(self):
         if self.qimage.text("PyQtBrowserTags"):
-            self.qimage.save(self.file_path)
+            print(self.file_path)
+            success = self.qimage.save(self.file_path)
+            if not success:
+                file = QFile(self.file_path)
+                self.qimage.save(self.file_path) 
 
     def save(self):
         self.qimage.save(self.file_path)

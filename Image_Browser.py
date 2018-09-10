@@ -217,7 +217,7 @@ class Image_Browser(QStackedWidget):
             # Secret is then between _ and .
             secret = request_url[request_url.find('_'):request_url.find('.')][1:]
 
-            file_name = "data/flickr_image_" + farm_id + server_id + photo_id + secret
+            file_name = "./data/" + farm_id + server_id + photo_id + secret + ".jpg"
             img_data = reply.readAll()
             img = Image(self, file_name, img_data)
 
