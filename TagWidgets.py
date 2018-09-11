@@ -127,7 +127,6 @@ class TagAddWidget(QWidget):
 class ZoomedWidget(QWidget):
 
     def __init__(self, parent, image=None):
-        # TODO: Case for no image
         super().__init__(parent)
         self.setFocusPolicy(Qt.StrongFocus)
         self.setGeometry(parent.geometry())

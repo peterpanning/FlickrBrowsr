@@ -140,10 +140,6 @@ class Image_Browser(QStackedWidget):
             return self.images[self.selected_image_index]
         else:
             return None
-
-    def handleSave(self):
-        for image in self.images:
-            image.save()
     
     def handleDelete(self):
         self.images[self.selected_image_index].delete()
@@ -226,7 +222,8 @@ class Image_Browser(QStackedWidget):
             img_data = reply.readAll()
             img = Image(self, file_name, img_data)
 
-            self.images.insert(self.selected_image_index, img)
+            self.images.insert(0, img)
+            self.setSelectedImageIndex(0)
             self.thumbnail_widget.loadThumbnails()
             self.tag_widget.update()
         else:

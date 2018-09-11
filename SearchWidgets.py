@@ -45,7 +45,7 @@ class SearchView(QWidget):
         if self.currentImage():
             self.currentImage().activate()
 
-        ####### SAVE/DELETE BUTTONS #######
+        ####### DELETE BUTTON #######
 
         self.layout().addLayout(QHBoxLayout())
         deleteButton = MyButton("Delete", self)
@@ -130,7 +130,8 @@ class SearchView(QWidget):
         self.parent().handleDelete()
 
     def handleSave(self):
-        self.parent().handleSave()
+        for image in self.parent().images:
+            image.save()
 
 class SearchPanel(QWidget):
 
