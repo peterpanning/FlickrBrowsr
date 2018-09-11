@@ -1,18 +1,18 @@
-#FlickrBrowsr
+# FlickrBrowsr
 
-####A Cross-Platform Image Application Built with PyQt5
+#### A Cross-Platform Image Application Built with PyQt5
 
 FlickrBrowsr is a proof-of-concept application which allows users to search the Flickr platform for images, add tags to images, and save the tagged images to their local library. It uses the Python Qt SDK wrapper **PyQt5** for all GUI and multimedia management and the `flickrapi` python module to interact with Flickr.
 
-###Requirements
+### Requirements
 
 This project requires the `pyqt5` and `flickrapi` python modules and their dependencies, including `requests` and `six`. 
 
-###Known Issues
+### Known Issues
 
 Although this project was intended to have complete cross-platform support, incompatibility between Qt, OpenSSL, and Linux proved too troublesome to support Linux as a platform. In fact, this program will hardly run at all without a valid Flickr API key (not included), regardless of your platform. 
 
-###Program Structure
+### Program Structure
 
 `tree` output:
 
@@ -86,7 +86,7 @@ From the top down:
 
 
 
-###Challenges and Known Issues
+### Challenges and Known Issues
 
 This project seems to me to be a great example of why PyQt5 is not quite ready for production applications. 
 
@@ -97,7 +97,7 @@ The chosen implementation of Thumbnails and ZoomedImages as subclasses of our Im
 Adding a secret to a public GitHub repository proved nontrivial. There are a few tools available for this but none of them have great documentation, and it seemed not strictly necessary considering I'm likely to be the only person to ever run this program, so I skipped it. The program won't function without an API key, so if you try to clone this repo, the program will not run. 
 
 
-###Conclusion
+### Conclusion
 
 If I were to do this project again, I would more clearly separate on- and off-screen data representations in the Image class and might even choose to do the entire thing in C++ to more easily create the project with Qt Creator. 
 
