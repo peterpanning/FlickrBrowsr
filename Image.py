@@ -75,47 +75,29 @@ class Image(QLabel):
 
 
 class Thumbnail(Image):
-    def __init__(self, parent, image):
+
+    def __init__(self, parent, image, num_thumbs=1):
         
         super().__init__(parent)
         self.file_path = image.file_path
         self.qimage = image.qimage
         self.setPixmap(image.pixmap())
-        self.resizeToParent()
+        self.resizeToParent(num_thumbs)
         self.show()
 
-    def resizeToParent(self):
+    def resizeToParent(self, num_thumbs=1):
 
-        # TODO: Fix bug where labels/pixmaps do not correctly resize when put in layout
-                
-        parent = self.parent()
-        layout = parent.layout()
-        margins = layout.getContentsMargins() # Is a tuple of (left, top, right, bottom)
-        max_thumbnails = layout.property("max_thumbnails")
-        if not max_thumbnails:
-            max_thumbnails = 1
-            
-        # A Thumbnail's new width is a function of its parent widget's width, 
-        # spacing, maximum number of thumbnails and layout margins, 
-        # and the width of the thumbnail's border. 
+        width = (self.parent().width() / num_thumbs) - (self.borderWidth * 2)
+        height = self.parent().height() - ( self.borderWidth * 2 )
 
-        width = ( ( parent.width() - ( layout.spacing() * ( max_thumbnails - 1 ) + 
-            ( margins[0] * 2 ) ) ) / max_thumbnails ) - ( self.borderWidth * 2 )
-        
-        # The new height is much easier to calculate
-        height = ( parent.height() - ( margins[1] * 2 ) - ( self.borderWidth * 2 ) )
+        # Which dimension we scale to depends on the smaller dimension of the new label
 
-        # TODO: This scaling is the same in both classes, could be replaced by a function
-
-        # Which dimension we scale to depends on which was larger in the original pixmap
-
-        if self.pixmap().height() > self.pixmap().width():
-            self.setPixmap(self.pixmap().scaledToHeight(height))
-        elif self.pixmap().width() > self.pixmap().height():
+        if width < height:
             self.setPixmap(self.pixmap().scaledToWidth(width))
+        elif height < width:
+            self.setPixmap(self.pixmap().scaledToHeight(height))
         else:
-            lesser = min(width, height)
-            self.setPixmap(self.pixmap().scaled(lesser, lesser, Qt.KeepAspectRatio))
+            self.setPixmap(self.pixmap().scaled(width, height, Qt.KeepAspectRatio))
         
 class ZoomedImage(Image):
     def __init__(self, parent, image):
@@ -133,12 +115,6 @@ class ZoomedImage(Image):
         width = self.parent().width() - (self.borderWidth * 2) - (margins[0] * 2)
         height = self.parent().height() - (self.borderWidth * 2) - (margins[1] * 2)
 
-        # Resizing an ZoomedImage's pixmap scales it based on the larger of its width or height
+        # ZoomedImages are always just scaled to the new label's width & height
 
-        if self.pixmap().height() > self.pixmap().width():
-            self.setPixmap(self.pixmap().scaledToHeight(height))
-        elif self.pixmap().width() > self.pixmap().height():
-            self.setPixmap(self.pixmap().scaledToWidth(width))
-        else:
-            lesser = min(width, height)
-            self.setPixmap(self.pixmap().scaled(lesser, lesser, Qt.KeepAspectRatio))
+        self.setPixmap(self.pixmap().scaled(width, height, Qt.KeepAspectRatio))

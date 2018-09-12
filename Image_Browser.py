@@ -194,9 +194,12 @@ class Image_Browser(QStackedWidget):
             photo_id = photo.get('id')
             secret = photo.get('secret')
             url = url.format(farm_id, server_id, photo_id, secret)
-            print("Image URL: {}".format(url))
-            request = QNetworkRequest(QUrl(url))
-            self.netman.get(request)
+            self.urlRequest(url)
+
+    def urlRequest(self, url):
+        print("Image URL: {}".format(url))
+        request = QNetworkRequest(QUrl(url))
+        self.netman.get(request)
 
     def requestFinished(self, reply):
         er = reply.error()

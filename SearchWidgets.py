@@ -25,12 +25,11 @@ class SearchView(QWidget):
         
         thumbnail_container = QWidget(self)
         thumbnail_container.setLayout(QHBoxLayout())
+        thumbnail_container.layout().setSpacing(0)
+        thumbnail_container.layout().setContentsMargins(0, 0, 0, 0)
         thumbnail_container.setGeometry(0, parent.height()/3, parent.width(), parent.height()/3)
         thumbnail_container.setFixedHeight(parent.height()/3)
         thumbnail_container.setFixedWidth(parent.width())
-        
-        # Setting this as a layout property makes it easier to access in the Image class
-        thumbnail_container.layout().setProperty("max_thumbnails", parent.max_thumbnails)
 
         self.layout().addWidget(thumbnail_container)
 
@@ -40,7 +39,7 @@ class SearchView(QWidget):
         lesser = min(total_images, parent.max_thumbnails)
         
         for i in range(0, lesser):
-            self.loadThumbnail(parent.images[i])
+            self.loadThumbnail(parent.images[i], lesser)
 
         if self.currentImage():
             self.currentImage().activate()
@@ -73,8 +72,8 @@ class SearchView(QWidget):
     def thumbnail_layout(self):
         return self.thumbnail_container().layout()
 
-    def loadThumbnail(self, image):
-        thumbnail = Thumbnail(self.thumbnail_container(), image)
+    def loadThumbnail(self, image, num_thumbs):
+        thumbnail = Thumbnail(self.thumbnail_container(), image, num_thumbs)
         self.thumbnail_layout().addWidget(thumbnail)
 
     def selectNextImage(self):
@@ -115,9 +114,9 @@ class SearchView(QWidget):
                 old_image.widget().deleteLater()
         for i in range(first_index, last_index):
             try:
-                self.loadThumbnail(self.parent().images[i])
+                self.loadThumbnail(self.parent().images[i], lesser)
             except IndexError:
-                self.loadThumbnail(self.parent().images[i - lesser])
+                self.loadThumbnail(self.parent().images[i - lesser], lesser)
         try:
             self.currentImage().activate()
         except AttributeError as e:
@@ -132,6 +131,9 @@ class SearchView(QWidget):
     def handleSave(self):
         for image in self.parent().images:
             image.save()
+
+    def urlRequest(self, url):
+        self.parent().urlRequest(url)
 
 class SearchPanel(QWidget):
 
@@ -155,6 +157,8 @@ class SearchPanel(QWidget):
 
         self.searchButton = MyButton("Search", self)
         self.searchButton.clicked.connect(self.search)
+        self.testButton = MyButton("Test", self)
+        self.testButton.clicked.connect(self.test)
         self.saveButton = MyButton("Save", self)
         self.saveButton.clicked.connect(self.handleSave)
         self.exitButton = MyButton("Exit", self)
@@ -180,6 +184,8 @@ class SearchPanel(QWidget):
         self.layout().itemAt(0).addWidget(self.searchField)
         self.layout().itemAt(0).addWidget(self.searchButton)
 
+        self.layout().itemAt(0).addWidget(self.testButton)
+
         self.layout().itemAt(0).addWidget(self.maxResultsLabel)
         self.layout().itemAt(0).addWidget(self.maxResultsBox)
 
@@ -195,6 +201,11 @@ class SearchPanel(QWidget):
         terms = self.searchField.text()
         max_results = int(self.maxResultsBox.currentText())
         self.parent().search(terms, max_results)
+
+    def test(self):
+        url = self.searchField.text()
+        max_results = int(self.maxResultsBox.currentText())
+        self.parent().urlRequest(url)
 
     def handleExit(self):
         exit()
