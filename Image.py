@@ -3,14 +3,7 @@ from PyQt5.QtWidgets import QLabel, QWidget, QSizePolicy
 from PyQt5.QtCore import *
 import os
 
-# TODO: Is our Image class a QLabel which has a QImage, pixmap, and file path, 
-# or a QWidget which has a QImage, QPixmap, and file path? How easy would this
-# be to change? 
-
 class Image(QLabel):
-
-    # TODO: Set initial size and fixed aspect ratio for label, 
-    # resize pixmap within those dimensions?
 
     borderColorActive = "red"
     borderColorInactive = "grey"
@@ -64,40 +57,32 @@ class Image(QLabel):
 
     def readTags(self):
         # Returns tags as a list of strings
-        return self.qimage.text("PyQtBrowserTags").split(", ")
-    
-    def saveTags(self):
-        if self.qimage.text("PyQtBrowserTags"):
-            self.qimage.save(self.file_path) 
+        return self.qimage.text("PyQtBrowserTags").split(", ") 
 
     def save(self):
         self.qimage.save(self.file_path)
 
+    def saveTags(self):
+        if self.qimage.text("PyQtBrowserTags"):
+            self.qimage.save(self.file_path)
+
 
 class Thumbnail(Image):
 
-    def __init__(self, parent, image, num_thumbs=1):
+    def __init__(self, parent, image, max_thumbs=5):
         
         super().__init__(parent)
         self.file_path = image.file_path
         self.qimage = image.qimage
         self.setPixmap(image.pixmap())
-        self.resizeToParent(num_thumbs)
+        self.setMaximumWidth(self.parent().width()/max_thumbs)
+        self.resizeToParent()
         self.show()
 
-    def resizeToParent(self, num_thumbs=1):
-
-        width = (self.parent().width() / num_thumbs) - (self.borderWidth * 2)
+    def resizeToParent(self):
+        width = (self.maximumWidth()) - (self.borderWidth * 2)
         height = self.parent().height() - ( self.borderWidth * 2 )
-
-        # Which dimension we scale to depends on the smaller dimension of the new label
-
-        if width < height:
-            self.setPixmap(self.pixmap().scaledToWidth(width))
-        elif height < width:
-            self.setPixmap(self.pixmap().scaledToHeight(height))
-        else:
-            self.setPixmap(self.pixmap().scaled(width, height, Qt.KeepAspectRatio))
+        self.setPixmap(self.pixmap().scaled(width, height, Qt.KeepAspectRatio))
         
 class ZoomedImage(Image):
     def __init__(self, parent, image):
@@ -112,9 +97,9 @@ class ZoomedImage(Image):
     def resizeToParent(self):
         
         margins = self.parent().layout().getContentsMargins() # A tuple of [left, top, right, bottom]
-        width = self.parent().width() - (self.borderWidth * 2) - (margins[0] * 2)
-        height = self.parent().height() - (self.borderWidth * 2) - (margins[1] * 2)
+        width = self.parent().width() - (self.borderWidth * 2) - ( margins[0] * 2 )
+        height = self.parent().height() - (self.borderWidth * 2) - ( margins[1] * 2 )
 
-        # ZoomedImages are always just scaled to the new label's width & height
+        # ZoomedImages are always scaled to the new label's width & height
 
         self.setPixmap(self.pixmap().scaled(width, height, Qt.KeepAspectRatio))

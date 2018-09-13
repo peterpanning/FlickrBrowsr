@@ -40,7 +40,7 @@ From the top down:
 * `selected_image_index`, `images`: List of images in memory and which image is currently selected. These attributes are referred to by various other classes throughout the program. 
 * `netman`: a QNetworkAccessManager which handles asynchronous requests to the Flickr API. 
 * `max_thumbnails`: The largest number of thumbnails which should be displayed on screen at one time. Currently hardcoded, should probably be read from a config file. 
-* `thumbnail_widget`, `tag_widget`: The full-window views of this application, displayed while searching for or tagging images. Added and reparented to the StackedWidget at initialization and switched between
+* `search_view`, `tag_view`: The full-window views of this application, displayed while searching for or tagging images. Added and reparented to the StackedWidget at initialization and switched between
 * `keyPressEvent(event)`: handles keyboard input
 * `zoomIn()`, `zoomOut()`: Change views accordingly
 * `setSelectedImageIndex(index)`: Does what it says, checks the number of images in the application to prevent IndexErrors or logic errors

@@ -17,13 +17,12 @@ class Image_Browser(QStackedWidget):
 # StackedWidget allows us to display and switch between multiple widgets within 
 # the same main window
 
-
 ### CONSTRUCTOR ###
 
     def __init__(self):
 
         # The ImageBrowser class is the main window which users interact with. 
-        # It can switch between two views: thumbnail or zoomed. 
+        # It can switch between two views: search or tag. 
 
         super().__init__()
 
@@ -37,15 +36,37 @@ class Image_Browser(QStackedWidget):
         self.initData()
         self.initUI()
         self.show()
-    
-    def initData(self, data_folder='./data'):
 
-        file_names = sorted(os.listdir(data_folder))
+
+    def addTag(self, tag):
+        self.currentImage().addTag(tag)
+
+
+    def currentImage(self):
+        if self.images:
+            return self.images[self.selected_image_index]
+        else:
+            return None
+    
+
+    def handleDelete(self):
+        if self.images:
+            self.images[self.selected_image_index].delete()
+            self.images.remove(self.images[self.selected_image_index])
+            if self.selected_image_index == len(self.images) and len(self.images) != 0:
+                self.selected_image_index = self.selected_image_index - 1
+            self.search_view.loadThumbnails()
+            self.tag_view.update()
+    
+
+    def initData(self, image_folder='./images'):
+
+        file_names = sorted(os.listdir(image_folder))
 
         for file_name in file_names:
             if file_name == ".DS_Store":
                 continue
-            full_path = data_folder + "/" + file_name
+            full_path = image_folder + "/" + file_name
             image = Image(self, full_path)
             self.images.append(image)
 
@@ -57,7 +78,6 @@ class Image_Browser(QStackedWidget):
 
         self.flickr = flickrapi.FlickrAPI(api_key, api_secret)
         
-    ### UI INITIALIZATION ###
 
     def initUI(self, x=300, y=300, width=800, height=600):
 
@@ -73,17 +93,18 @@ class Image_Browser(QStackedWidget):
         self.setMaximumSize(1920, 1080)
         self.max_thumbnails = 5
 
-        self.thumbnail_widget = SearchView(self)
-        self.tag_widget = TagView(self)
+        self.search_view = SearchView(self)
+        self.tag_view = TagView(self)
 
-        self.addWidget(self.thumbnail_widget)
-        self.addWidget(self.tag_widget)
+        self.addWidget(self.search_view)
+        self.addWidget(self.tag_view)
 
-    ### KEYBOARD INPUT ###
-    
+
     def keyPressEvent(self, event):
 
         # Controls what happens on keyboard input. Users may navigate through images via keyboard input
+
+        # TODO: Better handling of cases where there are no images
 
         key = event.key()
 
@@ -96,110 +117,29 @@ class Image_Browser(QStackedWidget):
             self.clickedSound.play()
 
         elif key == Qt.Key_Return:
-            if self.currentWidget() == self.thumbnail_widget:
-                self.zoomIn()
+            if self.currentWidget() == self.search_view:
+                self.setCurrentWidget(self.tag_view)
             else:
-                self.zoomOut()
+                self.setCurrentWidget(self.search_view)
 
         elif key == Qt.Key_Escape:
-            if self.currentWidget() == self.tag_widget:
-                self.zoomOut()
+            if self.currentWidget() == self.tag_view:
+                self.setCurrentWidget(self.search_view)
 
         elif key == Qt.Key_Comma or key == Qt.Key_PageUp:
-            if self.currentWidget() == self.thumbnail_widget:
+            if self.currentWidget() == self.search_view:
                 self.selectPreviousPage()
                 self.clickedSound.play()
             else:
                 self.errorSound.play()
         
         elif key == Qt. Key_Period or key == Qt.Key_PageDown:
-            if self.currentWidget() == self.thumbnail_widget:
+            if self.currentWidget() == self.search_view:
                 self.selectNextPage()
                 self.clickedSound.play()
             else:
                 self.errorSound.play()
 
-        
-    def zoomOut(self):
-        self.setCurrentWidget(self.thumbnail_widget)
-
-    def zoomIn(self):
-        self.setCurrentWidget(self.tag_widget)
-
-    def setSelectedImageIndex(self, new_index):
-        num_images = len(self.images)
-        if new_index < 0:
-            self.selected_image_index = num_images + new_index
-        elif new_index >= num_images:
-            self.selected_image_index = new_index - num_images
-        else:
-            self.selected_image_index = new_index
-
-    def currentImage(self):
-        if len(self.images) > 0:
-            return self.images[self.selected_image_index]
-        else:
-            return None
-    
-    def handleDelete(self):
-        self.images[self.selected_image_index].delete()
-        self.images.remove(self.images[self.selected_image_index])
-        self.thumbnail_widget.loadThumbnails()
-        self.tag_widget.update()
-
-    def selectNextImage(self):
-        self.setSelectedImageIndex(self.selected_image_index + 1)
-        self.thumbnail_widget.selectNextImage()
-        self.tag_widget.update()
-
-    def selectPreviousImage(self):
-        self.setSelectedImageIndex(self.selected_image_index - 1)
-        self.thumbnail_widget.selectPreviousImage()
-        self.tag_widget.update()
-
-    def selectNextPage(self):
-        limit = min(len(self.images), self.max_thumbnails)
-        self.setSelectedImageIndex(self.selected_image_index + limit)
-        self.thumbnail_widget.loadThumbnails()
-        self.tag_widget.update()
-    
-    def selectPreviousPage(self):
-        limit = min(len(self.images), self.max_thumbnails)
-        self.setSelectedImageIndex(self.selected_image_index - limit)
-        self.thumbnail_widget.loadThumbnails()
-        self.tag_widget.update()
-
-    def addTag(self, tag):
-        self.currentImage().addTag(tag)
-
-    def saveAllTags(self):
-        for image in self.images:
-            image.saveTags()
-
-    def search(self, terms, max_results):
-
-        xml = self.flickr.photos.search(tags=terms, per_page=max_results)
-
-        farm_id = ""
-        server_id = ""
-        photo_id = ""
-        secret = ""
-
-        for photo in xml.iter('photo'):
-            # URL must be declared within the loop, or it won't be 
-            # able to be formatted in subsequent iterations
-            url = "https://farm{}.staticflickr.com/{}/{}_{}.jpg"
-            farm_id = photo.get('farm')
-            server_id = photo.get('server')
-            photo_id = photo.get('id')
-            secret = photo.get('secret')
-            url = url.format(farm_id, server_id, photo_id, secret)
-            self.urlRequest(url)
-
-    def urlRequest(self, url):
-        print("Image URL: {}".format(url))
-        request = QNetworkRequest(QUrl(url))
-        self.netman.get(request)
 
     def requestFinished(self, reply):
         er = reply.error()
@@ -221,13 +161,79 @@ class Image_Browser(QStackedWidget):
             # Secret is then between _ and .
             secret = request_url[request_url.find('_'):request_url.find('.')][1:]
 
-            file_name = "./data/" + farm_id + server_id + photo_id + secret + ".jpg"
+            file_name = "./images/" + farm_id + server_id + photo_id + secret + ".jpg"
             img_data = reply.readAll()
             img = Image(self, file_name, img_data)
 
             self.images.insert(0, img)
             self.setSelectedImageIndex(0)
-            self.thumbnail_widget.loadThumbnails()
-            self.tag_widget.update()
+            self.search_view.loadThumbnails()
+            self.tag_view.update()
         else:
             print("HTTP Error {}".format(er))
+
+
+    def saveAllTags(self):
+        for image in self.images:
+            image.saveTags()
+
+
+    def search(self, terms, max_results):
+        xml = self.flickr.photos.search(tags=terms, per_page=max_results)
+        farm_id = ""
+        server_id = ""
+        photo_id = ""
+        secret = ""
+
+        for photo in xml.iter('photo'):
+            # URL must be declared within the loop, or it won't be 
+            # able to be formatted in subsequent iterations
+            url = "https://farm{}.staticflickr.com/{}/{}_{}.jpg"
+            farm_id = photo.get('farm')
+            server_id = photo.get('server')
+            photo_id = photo.get('id')
+            secret = photo.get('secret')
+            url = url.format(farm_id, server_id, photo_id, secret)
+            self.urlRequest(url)
+
+
+    def selectNextImage(self):
+        self.setSelectedImageIndex(self.selected_image_index + 1)
+        self.search_view.selectNextImage()
+        self.tag_view.update()
+
+
+    def selectNextPage(self):
+        limit = min(len(self.images), self.max_thumbnails)
+        self.setSelectedImageIndex(self.selected_image_index + limit)
+        self.search_view.loadThumbnails()
+        self.tag_view.update()
+
+
+    def selectPreviousImage(self):
+        self.setSelectedImageIndex(self.selected_image_index - 1)
+        self.search_view.selectPreviousImage()
+        self.tag_view.update()
+
+
+    def selectPreviousPage(self):
+        limit = min(len(self.images), self.max_thumbnails)
+        self.setSelectedImageIndex(self.selected_image_index - limit)
+        self.search_view.loadThumbnails()
+        self.tag_view.update()
+
+
+    def setSelectedImageIndex(self, new_index):
+        num_images = len(self.images)
+        if new_index < 0:
+            self.selected_image_index = num_images + new_index
+        elif new_index >= num_images:
+            self.selected_image_index = new_index - num_images
+        else:
+            self.selected_image_index = new_index
+
+
+    def urlRequest(self, url):
+        print("Image URL: {}".format(url))
+        request = QNetworkRequest(QUrl(url))
+        self.netman.get(request)

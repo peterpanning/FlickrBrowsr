@@ -51,12 +51,13 @@ class SearchView(QWidget):
         deleteButton.clicked.connect(self.handleDelete)
         self.layout().itemAt(1).addWidget(deleteButton)
 
-        self.layout().addItem(QSpacerItem(self.width(), 50))
+        self.layout().addItem(QSpacerItem(self.width(), self.height()/4))
 
         ####### SEARCH BUTTONS #######
 
         searchPanel = SearchPanel(self)
         self.layout().addWidget(searchPanel)
+
 
     def currentImage(self):
         # itemAt() returns a LayoutItem, widget() returns the widget that item manages
@@ -66,15 +67,48 @@ class SearchView(QWidget):
         else: 
             return None
 
-    def thumbnail_container(self):
-        return self.layout().itemAt(0).widget()
 
-    def thumbnail_layout(self):
-        return self.thumbnail_container().layout()
+    def handleDelete(self):
+        if len(self.parent().images) <= 5:
+            item = self.thumbnail_layout().takeAt(self.selected_thumbnail)
+            item.widget().deleteLater()
+        self.parent().handleDelete()
 
-    def loadThumbnail(self, image, num_thumbs):
-        thumbnail = Thumbnail(self.thumbnail_container(), image, num_thumbs)
+
+    def handleSave(self):
+        for image in self.parent().images:
+            image.save()
+
+
+    def loadThumbnail(self, image):
+        thumbnail = Thumbnail(self.thumbnail_container(), image)
         self.thumbnail_layout().addWidget(thumbnail)
+
+
+    def loadThumbnails(self):
+        total_images = len(self.parent().images)
+        lesser = min(total_images, self.parent().max_thumbnails)
+        # load pixmaps around selected thumbnail
+        first_index = self.parent().selected_image_index - self.selected_thumbnail
+        last_index = self.parent().selected_image_index + (lesser - self.selected_thumbnail)
+        for i in range(0, lesser):
+            old_image = self.thumbnail_layout().takeAt(0)
+            if old_image:
+                old_image.widget().deleteLater()
+        for i in range(first_index, last_index):
+            try:
+                self.loadThumbnail(self.parent().images[i])
+            except IndexError:
+                self.loadThumbnail(self.parent().images[i - lesser])
+        try:
+            self.currentImage().activate()
+        except AttributeError as e:
+            pass
+
+
+    def search(self, terms, max_results):
+        self.parent().search(terms, max_results)
+
 
     def selectNextImage(self):
         limit = min(len(self.parent().images), self.parent().max_thumbnails) - 1
@@ -89,6 +123,7 @@ class SearchView(QWidget):
         except AttributeError as e:
             pass
     
+
     def selectPreviousImage(self):
         limit = min(len(self.parent().images), self.parent().max_thumbnails) - 1
         try:
@@ -102,35 +137,14 @@ class SearchView(QWidget):
         except AttributeError as e:
             pass
 
-    def loadThumbnails(self):
-        total_images = len(self.parent().images)
-        lesser = min(total_images, self.parent().max_thumbnails)
-        # load pixmaps around selected thumbnail
-        first_index = self.parent().selected_image_index - self.selected_thumbnail
-        last_index = self.parent().selected_image_index + (lesser - self.selected_thumbnail)
-        for i in range(0, lesser):
-            old_image = self.thumbnail_layout().takeAt(0)
-            if old_image:
-                old_image.widget().deleteLater()
-        for i in range(first_index, last_index):
-            try:
-                self.loadThumbnail(self.parent().images[i], lesser)
-            except IndexError:
-                self.loadThumbnail(self.parent().images[i - lesser], lesser)
-        try:
-            self.currentImage().activate()
-        except AttributeError as e:
-            pass
 
-    def search(self, terms, max_results):
-        self.parent().search(terms, max_results)
+    def thumbnail_container(self):
+        return self.layout().itemAt(0).widget()
 
-    def handleDelete(self):
-        self.parent().handleDelete()
 
-    def handleSave(self):
-        for image in self.parent().images:
-            image.save()
+    def thumbnail_layout(self):
+        return self.thumbnail_container().layout()
+
 
     def urlRequest(self, url):
         self.parent().urlRequest(url)
@@ -169,7 +183,7 @@ class SearchPanel(QWidget):
         ####### COMBO BOX INIT ####### 
 
         self.maxResultsBox = QComboBox()
-        self.maxResultsBox.setFixedWidth(50)
+        self.maxResultsBox.setFixedWidth(60)
         for i in range(1, 11):
             self.maxResultsBox.addItem('{}'.format(i))
         self.maxResultsBox.addItem('20')
@@ -197,18 +211,24 @@ class SearchPanel(QWidget):
         self.layout().itemAt(1).addWidget(self.saveButton)
         self.layout().itemAt(1).addWidget(self.exitButton)
 
-    def search(self):
-        terms = self.searchField.text()
-        max_results = int(self.maxResultsBox.currentText())
-        self.parent().search(terms, max_results)
-
-    def test(self):
-        url = self.searchField.text()
-        max_results = int(self.maxResultsBox.currentText())
-        self.parent().urlRequest(url)
 
     def handleExit(self):
         exit()
 
+
     def handleSave(self):
         self.parent().handleSave()
+
+
+    def search(self):
+        terms = self.searchField.text()
+        max_results = int(self.maxResultsBox.currentText())
+        self.searchField.setText("")
+        self.parent().search(terms, max_results)
+
+
+    def test(self):
+        url = self.searchField.text()
+        max_results = int(self.maxResultsBox.currentText())
+        self.searchField.setText("")
+        self.parent().urlRequest(url)

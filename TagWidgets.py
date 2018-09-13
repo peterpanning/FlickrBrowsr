@@ -26,12 +26,19 @@ class TagView(QWidget):
         taw = TagAddWidget(self)
         self.layout().addWidget(taw, 1, 0)
 
+
     def addTag(self, tag):
         self.parent().addTag(tag)
         self.tlw.addTag(tag)
 
+
+    def saveAllTags(self):
+        self.parent().saveAllTags()
+
+
     def setImage(self, image):
         self.zoomed.setImage(image)
+
 
     def update(self):
         currentImage = self.parent().currentImage()
@@ -41,12 +48,12 @@ class TagView(QWidget):
         else:
             return
 
+
     def updateTags(self):
         new_tags = self.parent().currentImage().readTags()
         self.tlw.updateTags(new_tags)
     
-    def saveAllTags(self):
-        self.parent().saveAllTags()
+    
 
 class TagListWidget(QWidget):
 
@@ -78,6 +85,12 @@ class TagListWidget(QWidget):
                 self.tag_layout.addWidget(t)
         self.layout().addWidget(tag_container)
 
+    
+    def addTag(self, tag):
+        t = QLabel(tag, self)
+        self.tag_layout.addWidget(t)
+        
+
     def updateTags(self, new_tags=None):
         while self.tag_layout.itemAt(0):
             tag = self.tag_layout.takeAt(0).widget()
@@ -86,9 +99,7 @@ class TagListWidget(QWidget):
             t = QLabel(tag, self)
             self.tag_layout.addWidget(t)
     
-    def addTag(self, tag):
-        t = QLabel(tag, self)
-        self.tag_layout.addWidget(t)
+    
 
 class TagAddWidget(QWidget):
     
@@ -119,7 +130,7 @@ class TagAddWidget(QWidget):
     def handleButtonAdd(self):
         tag = self.tagLine.text()
         self.parent().addTag(tag)
-        self.tagLine.clear()
+        self.tagLine.setText("")
 
     def handleButtonSave(self):
         self.parent().saveAllTags()
