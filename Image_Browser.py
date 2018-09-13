@@ -104,17 +104,16 @@ class Image_Browser(QStackedWidget):
 
         # Controls what happens on keyboard input. Users may navigate through images via keyboard input
 
-        # TODO: Better handling of cases where there are no images
-
         key = event.key()
+
+        if not self.images:
+            return
 
         if key == Qt.Key_Left:
             self.selectPreviousImage()
-            self.clickedSound.play()
             
         elif key == Qt.Key_Right:
             self.selectNextImage()
-            self.clickedSound.play()
 
         elif key == Qt.Key_Return:
             if self.currentWidget() == self.search_view:
@@ -129,14 +128,12 @@ class Image_Browser(QStackedWidget):
         elif key == Qt.Key_Comma or key == Qt.Key_PageUp:
             if self.currentWidget() == self.search_view:
                 self.selectPreviousPage()
-                self.clickedSound.play()
             else:
                 self.errorSound.play()
         
         elif key == Qt. Key_Period or key == Qt.Key_PageDown:
             if self.currentWidget() == self.search_view:
                 self.selectNextPage()
-                self.clickedSound.play()
             else:
                 self.errorSound.play()
 
@@ -144,21 +141,18 @@ class Image_Browser(QStackedWidget):
     def requestFinished(self, reply):
         er = reply.error()
         if er == QNetworkReply.NoError:
-            # TODO: Separate function to parse reply
-            request_url = reply.request().url().toString() # => https://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
-            # Farm id is between "farm" and .
-            request_url = request_url.split('farm')[1] # => {farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
+            request_url = reply.request().url().toString() 
+            # >>> https://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
+            request_url = request_url.split('farm')[1] 
+            # >>> {farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
             farm_id = request_url[0:request_url.find('.')]
-            # Server id is then between / and /
-            request_url = request_url[request_url.find('/'):] # => /{server-id}/{id}_{secret}.jpg
+            request_url = request_url[request_url.find('/'):] 
+            # >>> /{server-id}/{id}_{secret}.jpg
             server_id = request_url.split('/')[1]
-            # Photo id is then between / and _
-            # Trim leading / => {server-id}/{id}_{secret}.jpg
             request_url = request_url[1:]
-            # Select after next /
-            request_url = request_url.split('/')[1] # => {id}_{secret}.jpg
+            request_url = request_url.split('/')[1] 
+            # >>> {id}_{secret}.jpg
             photo_id = request_url[:request_url.find('_')]
-            # Secret is then between _ and .
             secret = request_url[request_url.find('_'):request_url.find('.')][1:]
 
             file_name = "./images/" + farm_id + server_id + photo_id + secret + ".jpg"
@@ -199,6 +193,7 @@ class Image_Browser(QStackedWidget):
 
     def selectNextImage(self):
         self.setSelectedImageIndex(self.selected_image_index + 1)
+        self.clickedSound.play()
         self.search_view.selectNextImage()
         self.tag_view.update()
 
@@ -206,12 +201,14 @@ class Image_Browser(QStackedWidget):
     def selectNextPage(self):
         limit = min(len(self.images), self.max_thumbnails)
         self.setSelectedImageIndex(self.selected_image_index + limit)
+        self.clickedSound.play()
         self.search_view.loadThumbnails()
         self.tag_view.update()
 
 
     def selectPreviousImage(self):
         self.setSelectedImageIndex(self.selected_image_index - 1)
+        self.clickedSound.play()
         self.search_view.selectPreviousImage()
         self.tag_view.update()
 
@@ -219,6 +216,7 @@ class Image_Browser(QStackedWidget):
     def selectPreviousPage(self):
         limit = min(len(self.images), self.max_thumbnails)
         self.setSelectedImageIndex(self.selected_image_index - limit)
+        self.clickedSound.play()
         self.search_view.loadThumbnails()
         self.tag_view.update()
 

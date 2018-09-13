@@ -44,13 +44,6 @@ class SearchView(QWidget):
         if self.currentImage():
             self.currentImage().activate()
 
-        ####### DELETE BUTTON #######
-
-        self.layout().addLayout(QHBoxLayout())
-        deleteButton = MyButton("Delete", self)
-        deleteButton.clicked.connect(self.handleDelete)
-        self.layout().itemAt(1).addWidget(deleteButton)
-
         self.layout().addItem(QSpacerItem(self.width(), self.height()/4))
 
         ####### SEARCH BUTTONS #######
@@ -71,7 +64,8 @@ class SearchView(QWidget):
     def handleDelete(self):
         if len(self.parent().images) <= 5:
             item = self.thumbnail_layout().takeAt(self.selected_thumbnail)
-            item.widget().deleteLater()
+            if item:
+                item.widget().deleteLater()
         self.parent().handleDelete()
 
 
@@ -149,6 +143,7 @@ class SearchView(QWidget):
     def urlRequest(self, url):
         self.parent().urlRequest(url)
 
+
 class SearchPanel(QWidget):
 
     def __init__(self, parent):
@@ -169,10 +164,14 @@ class SearchPanel(QWidget):
 
         ####### SEARCH BUTTONS INIT #######
 
+        # TODO: Gray out delete button if there are no images
+
         self.searchButton = MyButton("Search", self)
         self.searchButton.clicked.connect(self.search)
         self.testButton = MyButton("Test", self)
         self.testButton.clicked.connect(self.test)
+        self.deleteButton = MyButton("Delete", self)
+        self.deleteButton.clicked.connect(self.handleDelete)
         self.saveButton = MyButton("Save", self)
         self.saveButton.clicked.connect(self.handleSave)
         self.exitButton = MyButton("Exit", self)
@@ -209,7 +208,12 @@ class SearchPanel(QWidget):
         self.layout().itemAt(1).setAlignment(Qt.AlignCenter)
 
         self.layout().itemAt(1).addWidget(self.saveButton)
+        self.layout().itemAt(1).addWidget(self.deleteButton)
         self.layout().itemAt(1).addWidget(self.exitButton)
+
+
+    def handleDelete(self):
+        self.parent().handleDelete()
 
 
     def handleExit(self):
