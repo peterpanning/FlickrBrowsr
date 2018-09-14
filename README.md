@@ -88,9 +88,7 @@ From the top down:
 
 ### Challenges and Known Issues
 
-This project seems to me to be a great example of why PyQt5 is not quite ready for production applications. 
-
-The typical approach when using Qt5 is to create the GUI with QtCreator and/or QML, but there is a notable lack of documentation, examples, or tutorials on how to do this with Python. This is also true of most of the rest of PyQt5, but whereas there is an intuitive approach to using the Qt API in Python by utilizing inheritance and leaps of faith, using Qt Creator with a Python project is much less intuitive. Because of this, development of this project took what seemed to be the only viable course and used QLayouts to create the GUI, which turned out to be, in the words of Dr. Hsu, "error-prone and tedious."  This was by far the greatest challenge in this project, and one that continues to plague it to this day. 
+The typical approach when using Qt5 is to create the GUI with QtCreator and/or QML, but there is a notable lack of documentation, examples, or tutorials on how to do this with Python. This is also true of most of the rest of PyQt5, but whereas there is an intuitive approach to using the Qt API in Python by utilizing inheritance and leaps of faith, using Qt Creator with a Python project is much less intuitive. Because of this, development of this project took what seemed to be the only viable course and used QLayouts to create the GUI, which turned out to be, in the words of Dr. Hsu, "error-prone and tedious."  If you're considering using PyQt for GUI work, my advice would be to wait until the Qt developers furnish that approach with some better examples. 
 
 The chosen implementation of Thumbnails and ZoomedImages as subclasses of our Image class makes things like clickable images difficult, and also causes an anti-pattern in that Images are always made to .hide() and subclasses must then .show(). It would probably make more sense to have an Image class which did not subclass QLabel and had QImages, QPixmaps, Thumbnails, and ZoomedImages as attributes, or even a proper sizing method to switch between them instead. This would basically be a rewrite of the project, and is questionably worthwhile at this point. 
 
@@ -100,18 +98,3 @@ Adding a secret to a public GitHub repository proved nontrivial. There are a few
 ### Conclusion
 
 If I were to do this project again, I would more clearly separate on- and off-screen data representations in the Image class and might even choose to do the entire thing in C++ to more easily create the project with Qt Creator. 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
