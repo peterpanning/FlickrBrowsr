@@ -5,9 +5,6 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# TODO: More elegant handling of cases where there are few or no images
-# TODO: More elegant way to play error sound in a variety of cases
-
 import sys
 from pathlib import Path 
 from PyQt5.QtWidgets import QApplication
