@@ -28,6 +28,8 @@ class Image_Browser(QStackedWidget):
 
         self.selected_image_index = 0
         self.images = []
+        self.allResults = 0
+        self.returnedResults = 0
         self.netman = QNetworkAccessManager()
         self.netman.finished.connect(self.requestFinished)
         self.clickedSound = QSound("assets/click.wav")
@@ -140,6 +142,7 @@ class Image_Browser(QStackedWidget):
 
     def requestFinished(self, reply):
         er = reply.error()
+        self.returnedResults += 1
         if er == QNetworkReply.NoError:
             request_url = reply.request().url().toString() 
             # >>> https://farm{farm-id}.staticflickr.com/{server-id}/{id}_{secret}.jpg
@@ -159,10 +162,12 @@ class Image_Browser(QStackedWidget):
             img_data = reply.readAll()
             img = Image(self, file_name, img_data)
 
-            self.images.insert(0, img)
-            self.setSelectedImageIndex(0)
-            self.search_view.loadThumbnails()
-            self.tag_view.update()
+            self.images.append(img)
+            if self.returnedResults == self.allResults:
+                new_index = len(self.images) - self.allResults
+                self.setSelectedImageIndex(new_index)
+                self.search_view.loadThumbnails()
+                self.tag_view.update()
         else:
             print("HTTP Error {}".format(er))
 
@@ -178,6 +183,8 @@ class Image_Browser(QStackedWidget):
         server_id = ""
         photo_id = ""
         secret = ""
+        self.returnedResults = 0
+        self.allResults = max_results
 
         for photo in xml.iter('photo'):
             # URL must be declared within the loop, or it won't be 

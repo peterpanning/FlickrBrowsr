@@ -39,7 +39,7 @@ class SearchView(QWidget):
         lesser = min(total_images, parent.max_thumbnails)
         
         for i in range(0, lesser):
-            self.loadThumbnail(parent.images[i], lesser)
+            self.loadThumbnail(parent.images[i])
 
         if self.currentImage():
             self.currentImage().activate()
@@ -84,16 +84,16 @@ class SearchView(QWidget):
         lesser = min(total_images, self.parent().max_thumbnails)
         # load pixmaps around selected thumbnail
         first_index = self.parent().selected_image_index - self.selected_thumbnail
-        last_index = self.parent().selected_image_index + (lesser - self.selected_thumbnail)
+        j = 0
         for i in range(0, lesser):
             old_image = self.thumbnail_layout().takeAt(0)
             if old_image:
                 old_image.widget().deleteLater()
-        for i in range(first_index, last_index):
             try:
-                self.loadThumbnail(self.parent().images[i])
+                self.loadThumbnail(self.parent().images[first_index + i])
             except IndexError:
-                self.loadThumbnail(self.parent().images[i - lesser])
+                self.loadThumbnail(self.parent().images[0 + j])
+                j += 1
         try:
             self.currentImage().activate()
         except AttributeError as e:
