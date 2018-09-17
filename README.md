@@ -16,6 +16,16 @@ Although this project was intended to have complete cross-platform support, inco
 
 ### Program Structure
 
+The overall structure of this program is:
+
+`flickrbrowsr.py` is the entry point, which creates the main ImageBrowser window. 
+
+This ImageBrowser (model, view, and controller) switches between two views, the Search View and Tag View. 
+
+Each of these two views is composed of a number of widgets, which handle being clicked or otherwise interacted with by making changes to themselves or requesting other changes be made to the ImageBrowser model. 
+
+That's basically it. There's some room for improvement in adherence to the MVC model, but this is sufficient for this proof of concept for now. 
+
 `tree` output:
 
 ![Image Not Found](./assets/flickrBrowsrTree.png "Project Directory Tree")
