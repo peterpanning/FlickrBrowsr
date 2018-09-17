@@ -4,7 +4,7 @@
 
 FlickrBrowsr is a proof-of-concept application which allows users to search the Flickr platform for images, add tags to images, and save the tagged images to their local library. It uses the Python Qt SDK wrapper **PyQt5** for all GUI and multimedia management and the `flickrapi` python module to interact with Flickr.
 
-![Image Not Found](./assets/Screen\ Shot\ .png)
+![Image Not Found](./assets/ScreenShot.png)
 
 ### Requirements
 
